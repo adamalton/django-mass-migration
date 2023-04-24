@@ -11,15 +11,13 @@ import logging
 from django.http import HttpResponse
 
 # Djangae Migrations
+from .exceptions import RequiredMigrationNotApplied
 from .models import MigrationRecord
 
 logger = logging.getLogger(__name__)
 
 APPLIED_MIGRATIONS_CACHE = {}
 
-
-class RequiredMigrationNotApplied(Exception):
-    pass
 
 
 def migration_is_applied(migration_identifier):
