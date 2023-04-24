@@ -27,10 +27,13 @@ class MigrationRecord(models.Model):
         ),
         editable=False,
     )
-    is_applied = models.BooleanField(default=False)
+    # We don't have an `is_initiated` field, as if it's not initiated it won't exist in the DB.
     initiated_at = models.DateTimeField(default=timezone.now, editable=False)
-    finalized_at = ComputedDateTimeField("_finalized_at")
     in_progress = ComputedBooleanField("_in_progress")
+    is_applied = models.BooleanField(
+        default=False, help_text="Is the migration fully applied to the DB?"
+    )
+    applied_at = ComputedDateTimeField("_applied_at")
     has_error = models.BooleanField(default=False)
     last_error = models.TextField(blank=True)
     was_faked = models.BooleanField(default=False)
@@ -38,13 +41,13 @@ class MigrationRecord(models.Model):
     def _key(self):
         return self.key_from_name_tuple((self.app_label, self.name))
 
-    def _finalized_at(self):
-        if self.is_applied and not self.finalized_at:
+    def _applied_at(self):
+        if self.is_applied and not self.applied_at:
             return timezone.now()
-        return self.finalized_at
+        return self.applied_at
 
     def _in_progress(self):
-        return self.initiated_at and not self.finalized_at
+        return self.initiated_at and not self.applied_at
 
     @staticmethod
     def key_from_name_tuple(name_tuple):

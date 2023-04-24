@@ -16,4 +16,4 @@ class MigrationRecordAdmin(admin.ModelAdmin):
     """ Custom admin class for the Migration model. """
 
     ordering = ("-initiated_at",)
-    list_display = ("name", "is_applied", "initiated_at", "finalized_at")
+    list_display = ("name", "initiated_at", "is_applied", "applied_at")
