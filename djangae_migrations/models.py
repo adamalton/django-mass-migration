@@ -4,7 +4,6 @@ import uuid
 # Third party
 from django.db import models
 from django.utils import timezone
-from gcloudc.db.models.fields.charfields import CharField
 from gcloudc.db.models.fields.computed import ComputedBooleanField, ComputedCharField
 
 # Djangae Migrations
