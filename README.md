@@ -72,3 +72,19 @@ To apply a migration to the database:
 5. Next to your new migration, click "Run...".
 6. Click "Run migration".
 7. Wait for the migration to be listed as applied in the Migration Record list view, or check the Google Cloud Logging output for more detailed progress information.
+
+
+Concepts
+--------
+
+### General approach
+
+TODO: long-running migrations, errors, etc.
+
+### Model State
+
+TODO: Stuff about why there's no model history (apps/schema_editor).
+
+### Workflow & Code Protection
+
+TODO: Deployment workflow and use of enforcement utilities
