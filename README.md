@@ -49,21 +49,23 @@ There are three broad types of migration for you to choose from.
 
 ### simple
 
-TODO: explalin this
+TODO: explain this
 
 ### mapper
 
-TODO: explalin this
+TODO: explain this
 
 ### custom
 
-TODO: explalin this
+TODO: explain this
 
 
 Applying Migrations
 -------------------
 
-To apply a migration to the database:
+There are two ways to apply a migration to the database:
+
+### Via the Django Admin
 
 1. Ensure that the Django admin is set up in your project.
 2. Deploy your project, including the new migration file, to Google App Engine.
@@ -72,6 +74,11 @@ To apply a migration to the database:
 5. Next to your new migration, click "Run...".
 6. Click "Run migration".
 7. Wait for the migration to be listed as applied in the Migration Record list view, or check the Google Cloud Logging output for more detailed progress information.
+
+### Programmatically
+
+If you want to create your own system for applying migrations, you can use the API functions.
+Or you will be able to, once I've written them.
 
 
 Concepts
