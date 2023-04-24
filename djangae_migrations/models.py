@@ -34,6 +34,7 @@ class MigrationRecord(models.Model):
     in_progress = ComputedBooleanField("_in_progress")
     has_error = models.BooleanField(default=False)
     last_error = models.TextField(blank=True)
+    was_faked = models.BooleanField(default=False)
 
     def _key(self):
         return self.key_from_name_tuple((self.app_label, self.name))
