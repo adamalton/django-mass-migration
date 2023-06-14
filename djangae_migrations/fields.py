@@ -6,3 +6,7 @@ from gcloudc.db.models.fields.computed import ComputedFieldMixin
 class ComputedDateTimeField(ComputedFieldMixin, models.DateTimeField):
     pass
 
+
+# TODO: make a MR to make this the defualt ComputedCharField in gcloudc
+class ComputedCharField(ComputedFieldMixin, models.CharField):
+    pass
