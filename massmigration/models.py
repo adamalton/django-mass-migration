@@ -15,7 +15,7 @@ from .utils.functional import MemoizedLazyList
 class MigrationRecord(models.Model):
     """ Stores a record of a particular migration being applied to the database. """
 
-    key = ComputedCharField(max_length=250, "_key", primary_key=True)
+    key = ComputedCharField("_key", max_length=250, primary_key=True)
     app_label = models.CharField(max_length=100, choices=MemoizedLazyList(get_app_label_choices))
     name = models.CharField(max_length=150)
     attempt_uuid = models.UUIDField(
