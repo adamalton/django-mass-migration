@@ -15,9 +15,13 @@ from .utils.functional import MemoizedLazyList
 class MigrationRecord(models.Model):
     """ Stores a record of a particular migration being applied to the database. """
 
-    key = ComputedCharField("_key", max_length=250, primary_key=True)
-    app_label = models.CharField(max_length=100, choices=MemoizedLazyList(get_app_label_choices))
-    name = models.CharField(max_length=150)
+    # I'm still not sure whether the key should be computed from the app_label and name or the
+    # other way round. The app_label at least is good for filtering in the Django admin though.
+    key = models.CharField(max_length=250, primary_key=True)
+    app_label = ComputedCharField(
+        "_app_label", max_length=100, choices=MemoizedLazyList(get_app_label_choices)
+    )
+    name = ComputedCharField("_name", max_length=150)
     attempt_uuid = models.UUIDField(
         default=uuid.uuid4,
         help_text=(
@@ -33,13 +37,16 @@ class MigrationRecord(models.Model):
     is_applied = models.BooleanField(
         default=False, help_text="Is the migration fully applied to the DB?"
     )
-    applied_at = ComputedDateTimeField("_applied_at")
+    applied_at = ComputedDateTimeField("_applied_at", null=True)
     has_error = models.BooleanField(default=False)
     last_error = models.TextField(blank=True)
     was_faked = models.BooleanField(default=False)
 
-    def _key(self):
-        return self.key_from_name_tuple((self.app_label, self.name))
+    def _app_label(self):
+        return self.key.split(":")[0]
+
+    def _name(self):
+        return self.key.split(":")[1]
 
     def _applied_at(self):
         if self.is_applied and not self.applied_at:

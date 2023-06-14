@@ -8,10 +8,8 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.module_loading import import_string
-from django.utils.functional import cached_property
 
 # Djangae Migrations
-from . import loader
 from . import record_cache
 from .exceptions import DependentMigrationNotApplied, MigrationAlreadyStarted
 from .models import MigrationRecord
@@ -40,25 +38,30 @@ class BaseMigration:
     # this attribute.
     backend_method: str = None
 
-
-    @cached_property
-    def key_tuple(self):
-        """ Returns the (app_label, file_name) tuple of this migration based on the file name.
-            This should uniquely identify this migration in the project.
-        """
-        return loader.get_key_tuple(self.__class__)
+    def __init__(self, app_label, name):
+        self.app_label = app_label
+        self.name = name
 
     @property
     def key(self):
         """ A string which uniquely identifies this migration in the system. """
-        return ":".join(self.key_tuple)
+        return f"{self.app_label}:{self.name}"
 
-    def get_backend(self):
-        backend_class = import_string(
+    @property
+    def description(self):
+        # Allows the docstring to be accessed from templates despite its double underscore name
+        return self.__doc__
+
+    @property
+    def backend_str(self):
+        return (
             self.backend or
             getattr(settings, "MASSMIGRATION_BACKEND", None) or
             DEFAULT_BACKEND
         )
+
+    def get_backend(self):
+        backend_class = import_string(self.backend_str)
         return backend_class()
 
     def launch(self):
@@ -71,17 +74,14 @@ class BaseMigration:
         method(self)
         logger.info("Launched migration %s on backend %s", self.key, backend.__class__)
 
-
     def mark_as_started(self):
         """ Mark the migration as started in the database. """
         with transaction.atomic():
-            migration = MigrationRecord.objects.get(key=self.key)
-            if migration.initiated_at:
+            _migration, created = MigrationRecord.objects.get_or_create(key=self.key)
+            if not created:
                 raise MigrationAlreadyStarted(
                     f"Migration {self.__class__.__name__} has already been initiated."
                 )
-            migration.initiated_at = timezone.now()
-            migration.save()
 
     @retry_on_error()
     def mark_as_errored(self, error=None):

@@ -8,6 +8,7 @@ from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
 
 # Mass Migration
+from massmigration.constants import MIGRATIONS_FOLDER
 from massmigration.loader import is_valid_migration_id, is_valid_migration_name
 
 class Command(BaseCommand):
@@ -66,12 +67,9 @@ class Command(BaseCommand):
             raise CommandError(f"Couldn't find migration template '{options['template']}'.")
 
         app = apps.get_app_config(app_label)
-        migrations_folder_path = os.path.join(app.path, "massmigrations")
+        migrations_folder_path = os.path.join(app.path, MIGRATIONS_FOLDER)
         if not os.path.isdir(migrations_folder_path):
             os.mkdir(migrations_folder_path)
-            # raise CommandError(
-            #     f"Path {migrations_folder_path} does not exist or is not a directory."
-            # )
 
         existing_migrations = []
         for item in os.listdir(migrations_folder_path):
