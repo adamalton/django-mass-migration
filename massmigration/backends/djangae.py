@@ -11,7 +11,7 @@ from .base import BackendBase
 logger = logging.getLogger(__name__)
 
 
-class DjanaeBackend(BackendBase):
+class DjangaeBackend(BackendBase):
     """ Djangae-based backend for running operations on Google Cloud Tasks. """
 
     def run_simple(self, migration):
