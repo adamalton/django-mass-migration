@@ -19,5 +19,5 @@ def get_key_tuple(cls):
     return (app_label, name)
 
 
-def _is_valid_migration_name(name):
+def is_valid_migration_name(name):
     return bool(re.match(r"^\d{1,5}[a-z0-9_]+$", name))
