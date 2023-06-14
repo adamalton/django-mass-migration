@@ -30,9 +30,9 @@ def run_migration(request, key):
     migration = store.by_key.get(key)
     record = MigrationRecord.objects.filter(key=key).first()
     if not migration:
-        raise Http404(f"Migration with key {key} not found.")
+        raise Http404(f"Migration with key '{key}' not found.")
     if record:
-        messages.error(request, f"Migration with key {key} has already been started.")
+        messages.error(request, f"Migration '{key}' has already been started.")
         return redirect("massmigration_manage")
     try:
         migration.check_dependencies()

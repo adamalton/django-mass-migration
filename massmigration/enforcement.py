@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 APPLIED_MIGRATIONS_CACHE = {}
 
 
-
 def migration_is_applied(migration_identifier):
     """ Tells you whether or not the specified migration has been applied to the DB.
         Positive (True) responses are cached to avoid repeated DB queries.

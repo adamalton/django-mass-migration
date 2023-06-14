@@ -14,7 +14,7 @@ It is particularly useful for schemaless databases where Django's normal concept
 Due to the expectation that migrations maybe be long-running, and just for awesomeness, it provides a web based (rather than terminal based) interface for managing the migrations.
 
 The actual running of the operations can be done on a "backend" of your choosing, e.g. a task queue.
-A backend for running migration operations on [Djangae](https://gitlab.com/potato-oss/djangae/djangae) and [Glcoudc](https://gitlab.com/potato-oss/google-cloud/django-gcloud-connectors/) is bundled with the app.
+A backend for running migration operations on [Djangae](https://gitlab.com/potato-oss/djangae/djangae) with [Glcoudc](https://gitlab.com/potato-oss/google-cloud/django-gcloud-connectors/) is bundled with the app.
 
 
 Installation
@@ -40,10 +40,10 @@ This command has two required, positional arguments:
 
 The command also takes the following optional arguments:
 
-* `--template` - this should be the name of one of the supplied templates in `massmigration/templates`, without the extension, e.g. `--template=mapper`. See [Migration Types](#migration-types).
+* `--template` - this should be the name of one of the supplied templates in `massmigration/templates/migration_templates`, without the extension, e.g. `--template=mapper`. See [Migration Types](#migration-types).
 
-A file will be created inside a folder called 'migrations' in your app, using the supplied migration name.
-E.g. `myapp/migrations/001_my_migration.py`.
+A file will be created inside a folder called 'massmigrations' in your app, using the supplied migration name.
+E.g. `myapp/massmigrations/001_my_migration.py`.
 This is a blank slate for you to write your migration code in.
 
 
