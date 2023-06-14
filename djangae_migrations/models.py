@@ -4,10 +4,10 @@ import uuid
 # Third party
 from django.db import models
 from django.utils import timezone
-from gcloudc.db.models.fields.computed import ComputedBooleanField, ComputedCharField
+from gcloudc.db.models.fields.computed import ComputedBooleanField
 
 # Djangae Migrations
-from .fields import ComputedDateTimeField
+from .fields import ComputedCharField, ComputedDateTimeField
 from .utils.apps import get_app_label_choices
 from .utils.functional import MemoizedLazyList
 
@@ -15,9 +15,9 @@ from .utils.functional import MemoizedLazyList
 class MigrationRecord(models.Model):
     """ Stores a record of a particular migration being applied to the database. """
 
-    key = ComputedCharField("_key", primary_key=True)
-    app_label = models.CharField(choices=MemoizedLazyList(get_app_label_choices))
-    name = models.CharField()
+    key = ComputedCharField(max_length=250, "_key", primary_key=True)
+    app_label = models.CharField(max_length=100, choices=MemoizedLazyList(get_app_label_choices))
+    name = models.CharField(max_length=150)
     attempt_uuid = models.UUIDField(
         default=uuid.uuid4,
         help_text=(
