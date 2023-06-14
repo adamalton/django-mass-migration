@@ -6,8 +6,8 @@ This is a Django app which provides utilities for performing data operations on 
 Similar to Django's built-in migration system, it allows you to define data migrations to be performed on the database,
 and it allows you to then apply those migration operations to your database and it tracks which migrations have been applied and which haven't.
 
-Unlike Django's built-in migration system, it is designed for performing long-running data modification tasks which run on Google Cloud Tasks,
-and where there could be a significant amount of time between when the migration is started and when it's finished.
+Unlike Django's built-in migration system, it is designed for performing long-running data modification tasks
+where there could be a significant amount of time between when the migration is started and when it's finished.
 See [Concepts](#concepts).
 
 Partly for that reason, and just for awesomeness, it provides a web based (rather than terminal based) interface for managing the migrations.
@@ -132,6 +132,7 @@ Concepts
 ### General approach
 
 TODO: long-running migrations, errors, etc.
+Why long-running migrations are not run as part of the deployment process (because they take too long and you don't want to take your site down while they run).
 
 ### Model State
 
