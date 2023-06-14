@@ -4,7 +4,7 @@ from massmigration.migrations import BaseMigration
 class Migration(BaseMigration):
     """ YOUR DESCRIPTION HERE. This will appear in the Django admin. """
 
-    # This is for use for migrations which are not stored in a folder called 'migrations' inside
+    # This is for use for migrations which are not stored in a folder called 'massmigrations' inside
     # an installed app.
     app_label: str = None
 
@@ -22,7 +22,11 @@ class Migration(BaseMigration):
     def launch(self):
         self.check_dependencies()
         self.mark_as_started()
-        raise NotImplementedError(
-            "Replace this with your code. It should defer a task to perform the data changes and then call "
-            "self.mark_as_finished() when done, or self.mark_as_errored() if failed."
-        )
+
+        # PUT YOUR CODE HERE.
+        # It should defer whatever operation(s) you want to perform to a backend which knows how to
+        # perform them.
+        # When done, or when an error occurs, the backend must call mark_as_finished() or
+        # mark_as_errored_() on this object as appropriate.
+
+        raise NotImplementedError
