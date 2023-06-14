@@ -1,8 +1,7 @@
 Django Mass Migration
 =====================
 
-This is a Django app which provides utilities for performing data migrations in App Engine applications built using
-[Djangae](https://gitlab.com/potato-oss/djangae/djangae) and [Glcoudc](https://gitlab.com/potato-oss/google-cloud/django-gcloud-connectors/).
+This is a Django app which provides utilities for performing data operations on (optionally large) datasets.
 
 Similar to Django's built-in migration system, it allows you to define data migrations to be performed on the database,
 and it allows you to then apply those migration operations to your database and it tracks which migrations have been applied and which haven't.
@@ -13,12 +12,17 @@ See [Concepts](#concepts).
 
 Partly for that reason, and just for awesomeness, it provides a web based (rather than terminal based) interface for managing the migrations.
 
+The actual running of the operations can be done on a "backend" of your choosing, e.g. a task queue.
+A backend for running migration operations on [Djangae](https://gitlab.com/potato-oss/djangae/djangae) and [Glcoudc](https://gitlab.com/potato-oss/google-cloud/django-gcloud-connectors/) is bundled with the app.
+
 
 Installation
 ------------
 
 1. Install the package: `pip install massmigration`
 2. Add `massmigration` to `settings.INSTALLED_APPS`.
+3. Add  `path("migrations/, include("massmigration.urls")` to your root urlconf.
+4. If you're using the bundled backend, set `settings.MASSMIGRATION_TASK_QUEUE` to a Google Cloud Tasks queue name.
 
 
 Creating A Migration
@@ -49,15 +53,22 @@ There are three broad types of migration for you to choose from.
 
 ### simple
 
-TODO: explain this
+This is for a migration which is just a single Python function.
+It's intended for small operations which you know your backend can perform in one step.
 
 ### mapper
 
-TODO: explain this
+This is for mapping a function over the instances of a Django queryset.
+You define a queryset and an `operation` function, and the migration will call that function on each object in the queryset.
+
+The backend must be able to handle iterating over the queryset.
+The bundled DjangaeBackend can handle almost infinite sized querysets.
 
 ### custom
 
-TODO: explain this
+If you want to take matters into your own hands you can write an entirely custom migration.
+These can still be tracked the same as the other operations, but the implementation of what your migration
+does and how your the backend handles it are up to you.
 
 
 Applying Migrations
@@ -65,20 +76,54 @@ Applying Migrations
 
 There are two ways to apply a migration to the database:
 
-### Via the Django Admin
+### Via the Web UI
 
-1. Ensure that the Django admin is set up in your project.
-2. Deploy your project, including the new migration file, to Google App Engine.
-3. Go to the Django Admin site and under the Djangae Migrations app, select Migration Record.
-4. Click the "Manage Migrations" button.
+1. Optionally: ensure that the Django admin is set up in your project.
+2. Deploy your project, including the new migration file.
+3. Either:
+    - Go to the Django Admin site and under Mass Migrations -> Migration Record, click the "Manage Migrations" button; or
+    - Go directly to the URL of `reverse("massmigration_manage")` whatever path you've configured that to be on.
 5. Next to your new migration, click "Run...".
 6. Click "Run migration".
-7. Wait for the migration to be listed as applied in the Migration Record list view, or check the Google Cloud Logging output for more detailed progress information.
+7. Wait for the migration to be listed as applied in the Migration Record list view, or check the logging from your backend.
 
 ### Programmatically
 
 If you want to create your own system for applying migrations, you can use the API functions.
 Or you will be able to, once I've written them.
+
+
+Protecting Code Which Requires Migrations
+-----------------------------------------
+
+Sometimes in the development cycle of your application, you will want to ensure that a particular migration has been run,
+usually when you've added new code which expects the migration to have been applied before the code is run.
+
+To handle this, Mass Migration provides the following utilities:
+
+#### `massmigration.enforcement.requires_migration`
+
+This is a function decorator which ensures that the function cannot be executed until the specified migration has been applied.
+For example:
+
+```python
+@requires_migration(("myapp", "0001_my_migration"))
+def my_function():
+	...
+```
+
+This will raise `massmigration.exceptions.RequiredMigrationNotApplied` if the function is called before the migration is applied.
+
+Notes:
+* If the migration _is_ applied, then this will cache that fact, so it will only query the database the first time the function is called.
+* The migration identifier can either be a tuple of `(app_label, migration_name)` or can be a string of `"app_label:migration_name"`.
+
+
+#### `massmigration.enforcement.view_requires_migration`
+
+This is the same as `requires_migration` but for decorating a view function.
+If the specified migration is not applied then the view will return a 503 response.
+
 
 
 Concepts
