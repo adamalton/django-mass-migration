@@ -1,7 +1,7 @@
 Django Mass Migration
 =====================
 
-This is a Django app which provides utilities for performing data operations on (optionally large) datasets.
+This is a Django app which provides utilities for performing data operations on (optionally) large datasets.
 
 Similar to Django's built-in migration system, it allows you to define data migrations to be performed on the database,
 and to apply those migration operations to your database, and it tracks which migrations have been applied and which haven't.
