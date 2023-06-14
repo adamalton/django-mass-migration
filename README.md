@@ -1,5 +1,5 @@
-Djangae Migrations
-==================
+Django Mass Migration
+=====================
 
 This is a Django app which provides utilities for performing data migrations in App Engine applications built using
 [Djangae](https://gitlab.com/potato-oss/djangae/djangae) and [Glcoudc](https://gitlab.com/potato-oss/google-cloud/django-gcloud-connectors/).
@@ -17,16 +17,16 @@ Partly for that reason, and just for awesomeness, it provides a web based (rathe
 Installation
 ------------
 
-1. Install the package: `pip install djangae-migrations`
-2. Add `djangae_migration` to `settings.INSTALLED_APPS`.
+1. Install the package: `pip install massmigration`
+2. Add `massmigration` to `settings.INSTALLED_APPS`.
 
 
 Creating A Migration
 --------------------
 
-To create a new migration, run the `makedjangaemigration` management command:
+To create a new migration, run the `makemassmigration` management command:
 
-```python manage.py makedjangaemigration myapp my_migration_name```
+```python manage.py makemassmigration myapp my_migration_name```
 
 This command has two required, positional arguments:
 
@@ -35,7 +35,7 @@ This command has two required, positional arguments:
 
 The command also takes the following optional arguments:
 
-* `--template` - this should be the name of one of the supplied templates in `djangae_migrations/templates`, without the extension, e.g. `--template=mapper`. See [Migration Types](#migration-types).
+* `--template` - this should be the name of one of the supplied templates in `massmigration/templates`, without the extension, e.g. `--template=mapper`. See [Migration Types](#migration-types).
 
 A file will be created inside a folder called 'migrations' in your app, using the supplied migration name.
 E.g. `myapp/migrations/001_my_migration.py`.

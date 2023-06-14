@@ -1,4 +1,4 @@
-from djangae_migrations.migrations import BaseMigration
+from massmigration.migrations import BaseMigration
 
 
 class Migration(BaseMigration):

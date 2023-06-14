@@ -1,4 +1,4 @@
-from djangae_migrations.migrations import MapperMigration
+from massmigration.migrations import MapperMigration
 
 
 class Migration(MapperMigration):
