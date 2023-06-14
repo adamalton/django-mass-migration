@@ -4,11 +4,11 @@ import os
 # Third party
 from django.apps.registry import apps
 from django.core.management.base import BaseCommand, CommandError
-from django.template.exception import TemplateDoesNotExist
+from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import get_template
 
 # Mass Migration
-from massmigration.loader import is_valid_migration_name
+from massmigration.loader import is_valid_migration_id, is_valid_migration_name
 
 class Command(BaseCommand):
     # TODO: write this
@@ -29,7 +29,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "app_label",
-            nargs="?",
             help=(
                 "Name of the app for which to create a migration. "
                 "This must be an installed app in your project."
@@ -37,7 +36,6 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "migration_name",
-            nargs="?",
             help=(
                 "Name to give the migration file. "
                 "This can only contain letters, numbers and underscores."
@@ -56,27 +54,34 @@ class Command(BaseCommand):
         app_label = options["app_label"]
         migration_name = options["migration_name"]
 
+        if not is_valid_migration_name(migration_name):
+            raise CommandError(
+                f"{migration_name} is not a valid migration name. "
+                "Use letters, digits and underscores only."
+            )
+
         try:
-            template = get_template(options["template"])
+            template = get_template(f"migration_templates/{options['template']}.py")
         except TemplateDoesNotExist:
-            raise CommandError(f"Couldn't find migration template {options['template']}.")
+            raise CommandError(f"Couldn't find migration template '{options['template']}'.")
 
         app = apps.get_app_config(app_label)
         migrations_folder_path = os.path.join(app.path, "massmigrations")
         if not os.path.isdir(migrations_folder_path):
-            raise CommandError(
-                f"Path {migrations_folder_path} does not exist or is not a directory."
-            )
+            os.mkdir(migrations_folder_path)
+            # raise CommandError(
+            #     f"Path {migrations_folder_path} does not exist or is not a directory."
+            # )
 
         existing_migrations = []
         for item in os.listdir(migrations_folder_path):
-            if is_valid_migration_name(item):
+            if is_valid_migration_id(item.rstrip(".py")):
                 existing_migrations.append(item)
 
         if existing_migrations:
             latest = sorted(existing_migrations, reverse=True)[0]
             highest_number = int(latest.split("_", 1)[0])
-            dependencies = [latest.replace(".py", "")]
+            dependencies = [(app_label, latest.rstrip(".py"))]
         else:
             highest_number = 0
             dependencies = []
