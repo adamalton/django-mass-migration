@@ -94,9 +94,11 @@ class BaseMigration:
 
     def check_dependencies(self):
         """ Make sure that any migrations which this migration depends on have been applied. """
-        applied = MigrationRecord.objects.filter(is_applied=True)
-        applied_keys = {migration.key for migration in applied}
-        dependency_keys = {MigrationRecord.key_from_name_tuple(x) for x in self.dependencies}
+        # TODO: check that the specified migrations actually exist in the code.
+        dependency_keys = [MigrationRecord.key_from_name_tuple(x) for x in self.dependencies]
+        applied_keys = MigrationRecord.objects.filter(
+            is_applied=True, key__in=dependency_keys
+        ).values_list("pk", flat=True)
         for dependency_key in dependency_keys:
             if dependency_key not in applied_keys:
                 raise DependentMigrationNotApplied(
