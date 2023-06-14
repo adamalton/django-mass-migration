@@ -1,5 +1,7 @@
 name: Publish package to PyPI
 
+# Publishes to PyPI whenever a tag in the format "vX.X.X" is pushed.
+
 on:
   push:
     tags:
@@ -8,7 +10,7 @@ on:
 jobs:
   build-and-publish:
     name: Build package and publish to PyPI
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
     - name: Set up Python
