@@ -3,21 +3,23 @@ import logging
 
 # Third party
 from gcloudc.db import transaction
-from djangae.tasks.deferred import defer, defer_iteration_with_finalize
 from djangae.utils import retry_on_error
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.module_loading import import_string
 from django.utils.functional import cached_property
 
 # Djangae Migrations
 from . import loader
-from . import per_request_cache
+from . import record_cache
 from .exceptions import DependentMigrationNotApplied, MigrationAlreadyStarted
 from .models import MigrationRecord
 
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_BACKEND = "massmigration.backends.djangae.DjangaeBackend"
 
 
 class BaseMigration:
@@ -25,12 +27,19 @@ class BaseMigration:
 
     dependencies = []  # A list of (app_label, migration_name) pairs
 
-    # Which task queue to use when running tasks to apply the migration. Defaults to
-    # settings.MIGRATIONS_TASK_QUEUE_NAME
-    queue = None
+    # This is for use for migrations which are not stored in a folder called 'migrations' inside
+    # an installed app.
+    app_label: str = None
 
-    # Use this only if you're not storing your migrations in a folder called 'migrations'
-    app_label = None
+    # This can be set to make a migration run on a specific backend, rather than the one that's
+    # that's specified in the Django settings
+    backend: str = None
+
+    # This specifies the name of the method on the backend class which should be called to run this
+    # migration. Custom migration types can be run on custom backends which support them by using
+    # this attribute.
+    backend_method: str = None
+
 
     @cached_property
     def key_tuple(self):
@@ -44,22 +53,24 @@ class BaseMigration:
         """ A string which uniquely identifies this migration in the system. """
         return ":".join(self.key_tuple)
 
-    @property
-    def _queue_name(self):
-        if self.queue:
-            return self.queue
-        queue = getattr(settings, "MIGRATIONS_TASK_QUEUE_NAME", None)
-        if not queue:
-            raise NotImplementedError("Please configure settings.MIGRATIONS_TASK_QUEUE_NAME.")
-        return queue
+    def get_backend(self):
+        backend_class = import_string(
+            self.backend or
+            getattr(settings, "MASSMIGRATION_BACKEND", None) or
+            DEFAULT_BACKEND
+        )
+        return backend_class()
 
-    def start(self):
-        """ Defer the background task(s) to perform the operation on the database.
+    def launch(self):
+        """ Pass the migration to the backend to perform the data operation(s).
             This is what should be called by the web interface to trigger the migration.
         """
-        # I think this should probably be left unimplemented so that the subclasses implement their
-        # specific needs for it
-        raise NotImplementedError
+        self.check_dependencies()
+        backend = self.get_backend()
+        method = getattr(backend, self.backend_method)
+        method(self)
+        logger.info("Launched migration %s on backend %s", self.key, backend.__class__)
+
 
     def mark_as_started(self):
         """ Mark the migration as started in the database. """
@@ -75,7 +86,6 @@ class BaseMigration:
     @retry_on_error()
     def mark_as_errored(self, error=None):
         """ Mark the migration as errored in the database. """
-        per_request_cache.remove_migration(self.key)
         # TODO: Generate a proper traceback here
         error_str = f"{error.__class__.__name__}: {error}"
         MigrationRecord.objects.filter(key=self.key).update(has_error=True, last_error=error_str)
@@ -113,16 +123,14 @@ class SimpleMigration(BaseMigration):
         of one task.
     """
 
+    backend_method = "run_simple"
+
     def operation(self):
         raise NotImplementedError("The `operation` method must be implemented by subclasses.")
 
-    def start(self):
-        self.check_dependencies()
+    def wrapped_operation(self):
+        logger.info("Running operation for migration %s", self.key)
         self.mark_as_started()
-        defer(self._run, _queue=self._queue_name)
-        logger.info("Deferred task to run single-task migration %s", self.key)
-
-    def _run(self):
         try:
             self.operation()
         except Exception as error:
@@ -134,6 +142,8 @@ class SimpleMigration(BaseMigration):
 class MapperMigration(BaseMigration):
     """ A migration which calls a function on each object in a queryset. """
 
+    backend_method = "run_mapper"
+
     def get_queryset(self):
         """ Returns the Django queryset which is to be mapped over. """
         raise NotImplementedError("The `get_queryset` method must be implemented by subclasses.")
@@ -142,35 +152,22 @@ class MapperMigration(BaseMigration):
         """ This is what will get called on each model instance in the queryset. """
         raise NotImplementedError("The `operation` method must be implemented by subclasses.")
 
-    def start(self):
-        self.check_dependencies()
-        self.mark_as_started()
-        migration = MigrationRecord.objects.get(key=self.key)
-        defer_iteration_with_finalize(
-            self.get_queryset(),
-            self._wrapped_operation,
-            self.mark_as_finished,
-            attempt_uuid=migration.attempt_uuid,
-            _queue=self._queue_name,
-        )
-        logger.info("Deferred task to run mapper migration %s", self.key)
-
-    def _wrapped_operation(self, obj, attempt_uuid):
+    def wrapped_operation(self, obj, attempt_uuid):
         """ Call self.operation() on the object, but wrap it to catch any errors and set the
-            migration as failed.
+            migration as failed if necessary.
         """
         key = self.key
-        migration = per_request_cache.get_migration(key)
-        if migration is None:
+        record = record_cache.get_record(key)
+        if record is None:
             logger.warning(
                 "Migration %s no longer exists in the DB. Skipping processing operation.", key
             )
-        elif migration.attempt_uuid != attempt_uuid:
+        elif record.attempt_uuid != attempt_uuid:
             logger.warning(
                 "Migration %s now has attempt %s. Skipping processing operation from attempt %s.",
-                key, migration.attempt_uuid, attempt_uuid
+                key, record.attempt_uuid, attempt_uuid
             )
-        elif migration.has_error:
+        elif record.has_error:
             logger.warning(
                 "Migration %s is marked in the DB as having errors. Skipping processing operation.",
                 key,
@@ -186,7 +183,7 @@ class MapperMigration(BaseMigration):
             )
             try:
                 self.operation(obj)
-            except Excetion as error:
+            except Exception as error:
                 logger.exception(
                     "Error in migration %s trying to process object %s (pk=%r).",
                     key,

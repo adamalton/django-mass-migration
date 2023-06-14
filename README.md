@@ -95,3 +95,24 @@ TODO: Stuff about why there's no model history (apps/schema_editor).
 ### Workflow & Code Protection
 
 TODO: Deployment workflow and use of enforcement utilities
+
+
+Settings
+--------
+
+The following settings can be used:
+
+#### `MASSMIGRATION_BACKEND`
+
+This should be a dotted path string to the backend class that you want to use.
+
+
+#### `MASSMIGRATION_TASK_QUEUE`
+
+Used by the `DjangaeBackend`, this sets the Google Cloud Tasks queue name to be used for running migration tasks.
+
+
+#### `MASSMIGRATION_RECORD_CACHE_TIMEOUT`
+
+You're unlikely to need this.
+It sets the time for caching MigrationRecords for the purpose of checking a migration's status during mapper operations.
