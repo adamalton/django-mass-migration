@@ -2,7 +2,7 @@
 import logging
 
 # Third party
-from djangae.db import transaction
+from gcloudc.db import transaction
 from djangae.tasks.deferred import defer, defer_iteration_with_finalize
 from djangae.utils import retry_on_error
 from django.conf import settings
