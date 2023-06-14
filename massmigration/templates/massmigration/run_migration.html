@@ -1,0 +1,17 @@
+{% extends "massmigration/base.html" %}
+
+{% block content %}
+
+<h1>Run Migration</h1>
+<h2>{{migration.key}}</h2>
+<p>{{migration.description}}</p>
+<p class="pt">
+	This will launch the processing of the migration using the backend <code>{{migration.backend_str}}</code>.
+</p>
+
+<form method="post" action="" class="pt">
+	{% csrf_token %}
+	<button type="submit">Run migration</button>
+</form>
+
+{% endblock %}

@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+	<title>Mass Migrations</title>
+	<style type="text/css">
+		body {
+			display: flex;
+			justify-content: space-around;
+		}
+		.main {
+			max-width: 1024px;
+			padding: 2rem;
+		}
+		.nav {
+			background: #7700cc;
+			color: white;
+			display: flex;
+			justify-content: space-between;
+		}
+		.nav a, .nav a:visited {
+			color: white;
+			display: block;
+			padding: 0.3em 1em;
+		}
+		.messages {
+			list-style: none;
+			padding: 0;
+			width: 100%;
+		}
+		.messages li {
+			padding: 0.5em 5em;
+		}
+		.messages .success {
+			background: #bbffbb;
+		}
+		.messages .info {
+			background: #bbbbff;
+		}
+		.messages .error {
+			background: #ffbbbb;
+		}
+		.massmigrations {
+			border: 1px solid #3333aa;
+			border-collapse: collapse;
+		}
+		.massmigrations th, .massmigrations td {
+			border: 1px solid #3333aa;
+			padding: 0.4em;
+		}
+		.pt {
+			padding-top: 1rem;
+		}
+	</style>
+</head>
+<body>
+	<div class="main">
+		<nav class="nav">
+			<div><a href="{% url 'massmigration_manage' %}">Migrations</a></div>
+		</nav>
+		{% if messages %}
+			<ul class="messages">
+				{% for message in messages %}
+					<li class="{{message.tags}}">{{message}}</li>
+				{% endfor %}
+			</ul>
+		{% endif %}
+
+		{% block content %}{% endblock %}
+	</div>
+</body>
+</html>
