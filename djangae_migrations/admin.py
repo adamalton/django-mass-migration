@@ -12,8 +12,12 @@ class AppLabelFilter():
     # Migration.app_label field?
     pass
 
+
 class MigrationRecordAdmin(admin.ModelAdmin):
     """ Custom admin class for the Migration model. """
 
     ordering = ("-initiated_at",)
     list_display = ("name", "initiated_at", "is_applied", "applied_at")
+
+
+admin.site.register(MigrationRecord, MigrationRecordAdmin)
