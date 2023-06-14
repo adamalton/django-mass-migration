@@ -4,13 +4,14 @@ Django Mass Migration
 This is a Django app which provides utilities for performing data operations on (optionally large) datasets.
 
 Similar to Django's built-in migration system, it allows you to define data migrations to be performed on the database,
-and it allows you to then apply those migration operations to your database and it tracks which migrations have been applied and which haven't.
+and to apply those migration operations to your database, and it tracks which migrations have been applied and which haven't.
 
 Unlike Django's built-in migration system, it is designed for performing long-running data modification tasks
 where there could be a significant amount of time between when the migration is started and when it's finished.
 See [Concepts](#concepts).
+It is particularly useful for schemaless databases where Django's normal concept of schema changes doesn't apply.
 
-Partly for that reason, and just for awesomeness, it provides a web based (rather than terminal based) interface for managing the migrations.
+Due to the expectation that migrations maybe be long-running, and just for awesomeness, it provides a web based (rather than terminal based) interface for managing the migrations.
 
 The actual running of the operations can be done on a "backend" of your choosing, e.g. a task queue.
 A backend for running migration operations on [Djangae](https://gitlab.com/potato-oss/djangae/djangae) and [Glcoudc](https://gitlab.com/potato-oss/google-cloud/django-gcloud-connectors/) is bundled with the app.
