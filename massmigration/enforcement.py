@@ -12,6 +12,7 @@ from django.http import HttpResponse
 
 # Djangae Migrations
 from .exceptions import RequiredMigrationNotApplied
+from .loader import is_valid_migration_id
 from .models import MigrationRecord
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,10 @@ def migration_is_applied(migration_identifier):
     """ Tells you whether or not the specified migration has been applied to the DB.
         Positive (True) responses are cached to avoid repeated DB queries.
     """
-    key = MigrationRecord.key_from_name_tuple(migration_identifier)
+    if is_valid_migration_id(migration_identifier):
+        key = migration_identifier
+    else:
+        key = MigrationRecord.key_from_name_tuple(migration_identifier)
     try:
         return APPLIED_MIGRATIONS_CACHE[key]
     except KeyError:
