@@ -152,6 +152,7 @@ The following settings can be used:
 #### `MASSMIGRATION_BACKEND`
 
 This should be a dotted path string to the backend class that you want to use.
+The default is `"massmigration.backends.djangae.DjangaeBackend"`.
 
 
 #### `MASSMIGRATION_TASK_QUEUE`
