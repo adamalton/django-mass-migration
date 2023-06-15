@@ -6,7 +6,6 @@ from gcloudc.db import transaction
 from djangae.utils import retry_on_error
 from django.conf import settings
 from django.db import models
-from django.utils import timezone
 from django.utils.module_loading import import_string
 
 # Djangae Migrations
