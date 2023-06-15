@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-NAME = "massmigration"
+NAME = "django-mass-migration"
 PACKAGES = find_packages()
 DESCRIPTION = "Django app for long-running data migrations"
 LONG_DESCRIPTION = open(os.path.join(os.path.dirname(__file__), "README.md")).read()

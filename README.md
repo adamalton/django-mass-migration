@@ -20,7 +20,7 @@ A backend for running migration operations on [Djangae](https://gitlab.com/potat
 Installation
 ------------
 
-1. Install the package: `pip install massmigration`
+1. Install the package: `pip install django-mass-migration`
 2. Add `massmigration` to `settings.INSTALLED_APPS`.
 3. Add  `path("migrations/, include("massmigration.urls")` to your root urlconf.
 4. If you're using the bundled backend, set `settings.MASSMIGRATION_TASK_QUEUE` to a Google Cloud Tasks queue name.
