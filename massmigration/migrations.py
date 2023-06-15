@@ -11,13 +11,12 @@ from django.utils.module_loading import import_string
 
 # Djangae Migrations
 from . import record_cache
+from .constants import DEFAULT_BACKEND
 from .exceptions import DependentMigrationNotApplied, MigrationAlreadyStarted
 from .models import MigrationRecord
 
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_BACKEND = "massmigration.backends.djangae.DjangaeBackend"
 
 
 class BaseMigration:
