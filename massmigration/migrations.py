@@ -25,10 +25,6 @@ class BaseMigration:
 
     dependencies = []  # A list of (app_label, migration_name) pairs
 
-    # This is for use for migrations which are not stored in a folder called 'migrations' inside
-    # an installed app.
-    app_label: str = None
-
     # This can be set to make a migration run on a specific backend, rather than the one that's
     # that's specified in the Django settings
     backend: str = None
