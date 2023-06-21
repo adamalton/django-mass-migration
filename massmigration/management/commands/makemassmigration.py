@@ -44,7 +44,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--template",
-            default="simple",
+            default="mapper",
             help=(
                 "Which mapper template to use as the base. "
                 "Must exist as a python file in massmigration/templates/migration_templates."
