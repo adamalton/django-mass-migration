@@ -37,7 +37,7 @@ setup(
     install_requires=[
         "django>=3.2,<5.0",
         "djangae>=1.1.0",
-        "django-gcloud-connectors>=0.3.7",
+        "django-gcloud-connectors>=0.3.6",
     ],
     extras_require=EXTRAS,
     # tests_require=EXTRAS["test"],
