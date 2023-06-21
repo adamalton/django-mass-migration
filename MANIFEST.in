@@ -3,3 +3,6 @@ include README.md
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 recursive-include * *.html
+
+# This is needed to include our Python templates (which are not in a Python module with a __init__.py file)
+recursive-include * *.py
