@@ -18,8 +18,8 @@ class BackendBase(ABC):
             the get_queryset() method of the given MapperMigration.
             This MUST:
             * Call migration.mark_as_started() before performing the data operation.
-            * Get the value of `migration.attempt_uuid` when this method was called, and pass it as
-              the second argument to every call of `wrapped_operation()`.
+            * Get the value of `migration.attempt_uuid` returned from `mark_as_started()` and pass
+              it as the second argument to every call of `wrapped_operation()`.
             * Call migration.mark_as_finished() when the end of the queryset is reached.
 
             If `wrapped_operation()` returns False, it means that the migration has errored and

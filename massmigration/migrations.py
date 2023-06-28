@@ -1,4 +1,5 @@
 # Standard library
+from uuid import UUID
 import logging
 
 # Third party
@@ -68,14 +69,18 @@ class BaseMigration:
         method(self)
         logger.info("Launched migration %s on backend %s", self.key, backend.__class__)
 
-    def mark_as_started(self):
-        """ Mark the migration as started in the database. """
+    def can_be_started(self) -> bool:
+        return not MigrationRecord.objects.filter(key=self.key).exists()
+
+    def mark_as_started(self) -> UUID:
+        """ Mark the migration as started in the database. Return the attempt UUID. """
         with transaction.atomic():
-            _migration, created = MigrationRecord.objects.get_or_create(key=self.key)
-            if not created:
+            if not self.can_be_started():
                 raise MigrationAlreadyStarted(
                     f"Migration {self.__class__.__name__} has already been initiated."
                 )
+            migration = MigrationRecord.objects.create(key=self.key)
+            return migration.attempt_uuid
 
     @retry_on_error()
     def mark_as_errored(self, error=None):
