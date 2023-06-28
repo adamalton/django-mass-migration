@@ -25,7 +25,7 @@ class BaseMigration:
     dependencies = []  # A list of (app_label, migration_name) pairs
 
     # This can be set to make a migration run on a specific backend, rather than the one that's
-    # that's specified in the Django settings
+    # specified in the Django settings
     backend: str = None
 
     # This specifies the name of the method on the backend class which should be called to run this

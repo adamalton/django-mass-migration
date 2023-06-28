@@ -54,7 +54,7 @@ class MigrationRecord(models.Model):
         return self.applied_at
 
     def _in_progress(self):
-        return self.initiated_at and not self.applied_at
+        return not (self.is_applied or self.has_error)
 
     @staticmethod
     def key_from_name_tuple(name_tuple):
