@@ -15,6 +15,12 @@ from .utils.functional import MemoizedLazyList
 class MigrationRecord(models.Model):
     """ Stores a record of a particular migration being applied to the database. """
 
+    class Status(models.TextField):
+        APPLIED = "APPLIED"
+        ERRORED = "ERRORED"
+        RUNNING = "RUNNING"
+        NOT_RUN = "NOT_RUN"  # Can't be returned by this object, as this object won't exist
+
     # I'm still not sure whether the key should be computed from the app_label and name or the
     # other way round. The app_label at least is good for filtering in the Django admin though.
     key = models.CharField(max_length=250, primary_key=True)
@@ -63,3 +69,10 @@ class MigrationRecord(models.Model):
         """
         assert len(name_tuple) == 2
         return ":".join(name_tuple)
+
+    def status(self):
+        if self.is_applied:
+            return self.Status.APPLIED
+        if self.has_error:
+            return self.Status.ERRORED
+        return self.Status.RUNNING

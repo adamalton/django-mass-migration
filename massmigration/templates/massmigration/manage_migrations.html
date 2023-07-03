@@ -3,7 +3,7 @@
 {% block content %}
 
 <h1>Migrations</h1>
-<table class="massmigrations">
+<table class="table">
 	<thead>
 		<tr>
 			<th>App</th>
@@ -16,12 +16,11 @@
 	{% for migration in migrations %}
 		<tr>
 			<td>{{migration.app_label}}</td>
-			<td>{{migration.name}}</td>
+			<td><a href="{% url 'massmigration_detail' key=migration.key %}">{{migration.name}}</a></td>
 			<td>{% if migration.record.is_applied %}APPLIED{% elif migration.record.has_error %}ERRORED{% elif migration.record %}RUNNING{% else %}NOT RUN{% endif %}</td>
 			<td>
 				{% if not migration.record %}<a href="{% url 'massmigration_run' key=migration.key %}">Run...</a>
-				{% elif migration.record.has_error %}<a href="{% url 'massmigration_delete' key=migration.key %}">Delete...</a>
-				{% else %}-
+				{% else %}<a href="{% url 'massmigration_delete' key=migration.key %}">Delete...</a>
 				{% endif %}
 			</td>
 		</tr>

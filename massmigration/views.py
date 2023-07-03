@@ -52,6 +52,27 @@ def run_migration(request, key):
     return render(request, "massmigration/run_migration.html", context)
 
 
+@superuser_required()
+def migration_detail(request, key):
+    """ View the details of a single migration. """
+    migration = store.by_key.get(key)
+    record = MigrationRecord.objects.filter(key=key).first()
+    dependencies = []
+    dependency_keys = [MigrationRecord.key_from_name_tuple(x) for x in migration.dependencies]
+    dependency_records_by_key = MigrationRecord.objects.in_bulk(dependency_keys)
+    for dep_key in dependency_keys:
+        dependencies.append({
+            "key": dep_key,
+            "record": dependency_records_by_key.get(dep_key),
+        })
+    context = {
+        "migration": migration,
+        "record": record,
+        "dependencies": dependencies,
+    }
+    return render(request, "massmigration/migration_detail.html", context)
+
+
 
 @superuser_required()
 def delete_migration(request, key):
