@@ -14,6 +14,7 @@ from django.http import HttpResponse
 from .exceptions import RequiredMigrationNotApplied
 from .loader import is_valid_migration_id
 from .models import MigrationRecord
+from .utils.test import in_tests
 
 logger = logging.getLogger(__name__)
 
@@ -38,39 +39,41 @@ def migration_is_applied(migration_identifier):
     return False
 
 
-def requires_migration(migration_identifier):
+def requires_migration(migration_identifier, skip_in_tests=True):
     """ Function decorator which prevents the function being run if the specified migration is not
         applied.
     """
     def decorator(function):
         @wraps(function)
         def replacement(*args, **kwargs):
-            if not migration_is_applied(migration_identifier):
-                raise RequiredMigrationNotApplied(
-                    f"Function '{function}'' requires migration {migration_identifier} which has "
-                    "not been applied."
-                )
+            if not (skip_in_tests or in_tests()):
+                if not migration_is_applied(migration_identifier):
+                    raise RequiredMigrationNotApplied(
+                        f"Function '{function}'' requires migration {migration_identifier} which has "
+                        "not been applied."
+                    )
             return function(*args, **kwargs)
         return replacement
     return decorator
 
 
-def view_requires_migration(migration_identifier):
+def view_requires_migration(migration_identifier, skip_in_tests=True):
     """ Same as `requires_migration`, but for view functions. Returns a 503 status HttpResponse
         rather than raising an exception.
     """
     def decorator(function):
         @wraps(function)
         def replacement(*args, **kwargs):
-            if not migration_is_applied(migration_identifier):
-                logger.error(
-                    "View function '%s' requires migration '%s' which has not yet been applied.",
-                    function, migration_identifier
-                )
-                return HttpResponse(
-                    "This resource requires data changes which have not yet been made.",
-                    status=503,
-                )
+            if not (skip_in_tests or in_tests()):
+                if not migration_is_applied(migration_identifier):
+                    logger.error(
+                        "View function '%s' requires migration '%s' which has not yet been applied.",
+                        function, migration_identifier
+                    )
+                    return HttpResponse(
+                        "This resource requires data changes which have not yet been made.",
+                        status=503,
+                    )
             return function(*args, **kwargs)
         return replacement
     return decorator

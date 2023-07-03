@@ -118,6 +118,7 @@ This will raise `massmigration.exceptions.RequiredMigrationNotApplied` if the fu
 Notes:
 * If the migration _is_ applied, then this will cache that fact, so it will only query the database the first time the function is called.
 * The migration identifier can either be a tuple of `(app_label, migration_name)` or can be a string of `"app_label:migration_name"`.
+* There is an optional second argument `skip_in_tests`, which defaults to `True`.
 
 
 #### `massmigration.enforcement.view_requires_migration`
