@@ -152,7 +152,8 @@ The following settings can be used:
 #### `MASSMIGRATION_BACKEND`
 
 This should be a dotted path string to the backend class that you want to use.
-The default is `"massmigration.backends.djangae.DjangaeBackend"`.
+The default is `"massmigration.backends.djangae.DjangaeBackend"`,
+which works with SQL, Google Cloud Datastore and Firestore databases.
 
 
 #### `MASSMIGRATION_TASK_QUEUE`
