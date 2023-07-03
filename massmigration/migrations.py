@@ -3,17 +3,17 @@ from uuid import UUID
 import logging
 
 # Third party
-from gcloudc.db import transaction
 from djangae.utils import retry_on_error
 from django.conf import settings
 from django.db import models
 from django.utils.module_loading import import_string
 
-# Djangae Migrations
+# Mass Migration
 from . import record_cache
 from .constants import DEFAULT_BACKEND
 from .exceptions import DependentMigrationNotApplied, MigrationAlreadyStarted
 from .models import MigrationRecord
+from .utils.transaction import get_transaction
 
 
 logger = logging.getLogger(__name__)
@@ -74,7 +74,7 @@ class BaseMigration:
 
     def mark_as_started(self) -> UUID:
         """ Mark the migration as started in the database. Return the attempt UUID. """
-        with transaction.atomic():
+        with get_transaction().atomic():
             if not self.can_be_started():
                 raise MigrationAlreadyStarted(
                     f"Migration {self.__class__.__name__} has already been initiated."
@@ -92,7 +92,7 @@ class BaseMigration:
     @retry_on_error()
     def mark_as_finished(self):
         """ Mark the migration as applied/finalized in the database. """
-        with transaction.atomic():
+        with get_transaction().atomic():
             migration = MigrationRecord.objects.get(key=self.key)
             if migration.is_applied:
                 logger.warning("Migration %s is already marked as applied.", self.key)

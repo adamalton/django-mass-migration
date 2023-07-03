@@ -4,9 +4,9 @@ import logging
 # Third party
 from djangae.tasks.deferred import defer, defer_iteration_with_finalize
 from django.conf import settings
-from gcloudc.db import transaction
 
 # Massmigration
+from massmigration.utils.transaction import get_transaction
 from .base import BackendBase
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class DjangaeBackend(BackendBase):
         logger.info("Deferred task to run single-task migration %s", migration.key)
 
     def run_mapper(self, migration):
-        with transaction.atomic():
+        with get_transaction().atomic():
             attempt_uuid = migration.mark_as_started()
             defer_iteration_with_finalize(
                 migration.get_queryset(),
