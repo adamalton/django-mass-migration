@@ -71,8 +71,8 @@ class MigrationRecord(models.Model):
         return ":".join(name_tuple)
 
     def status(self):
-        if self.is_applied:
-            return self.Status.APPLIED
         if self.has_error:
             return self.Status.ERRORED
+        if self.is_applied:
+            return self.Status.APPLIED
         return self.Status.RUNNING
