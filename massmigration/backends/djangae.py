@@ -6,6 +6,7 @@ from djangae.processing import (
     datastore_key_ranges,
     firestore_name_key_ranges,
     sequential_int_key_ranges,
+    uuid_key_ranges,
 )
 from djangae.tasks.deferred import defer, defer_iteration_with_finalize
 from django.conf import settings
@@ -72,12 +73,14 @@ class DjangaeBackend(BackendBase):
         connection = router.db_for_write(queryset.model)
         engine = settings.DATABASES[connection]["ENGINE"]
         pk_field = queryset.model._meta.pk
-        if engine == "gcloudc.db.backends.datastore":
+        if isinstance(pk_field, models.UUIDField):
+            return uuid_key_ranges
+        elif engine == "gcloudc.db.backends.datastore":
             return datastore_key_ranges
         elif engine == "gcloudc.db.backends.firestore":
             if isinstance(pk_field, AutoCharField):
                 return firestore_name_key_ranges
-        else:
+        else:  # SQL
             if isinstance(pk_field, models.IntegerField):
                 return sequential_int_key_ranges
         # There's also `firestore_scattered_int_key_ranges` which we might want to use in some cases
