@@ -5,6 +5,7 @@ import logging
 from djangae.processing import (
     datastore_key_ranges,
     firestore_name_key_ranges,
+    firestore_scattered_int_key_ranges,
     sequential_int_key_ranges,
     uuid_key_ranges,
 )
@@ -80,6 +81,8 @@ class DjangaeBackend(BackendBase):
         elif engine == "gcloudc.db.backends.firestore":
             if isinstance(pk_field, AutoCharField):
                 return firestore_name_key_ranges
+            elif isinstance(pk_field, (models.AutoField, models.BigAutoField, models.SmallAutoField)):
+                return firestore_scattered_int_key_ranges
         else:  # SQL
             if isinstance(pk_field, models.IntegerField):
                 return sequential_int_key_ranges
