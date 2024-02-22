@@ -18,3 +18,14 @@ class RequiredMigrationNotApplied(Exception):
         tried to run when that migration is not yet applied.
     """
     pass
+
+
+class CannotRunOnGivenConnection(Exception):
+    """ Error for when a migration can't be run on a specified connection.
+    """
+    pass
+
+
+class InvalidDbAlias(Exception):
+    """ Error for when an invalid database alias is provided.
+    """

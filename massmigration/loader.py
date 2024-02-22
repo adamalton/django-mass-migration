@@ -40,9 +40,11 @@ class MigrationsStore:
                 items = os.listdir(migrations_path)
                 for item in sorted(items):
                     if is_valid_migration_id(item.rstrip(".py")):
-                        migration = load_migration(app_config, item)
-                        self._all.append(migration)
-                        self._by_key[migration.key] = migration
+                        migrations = load_migrations(app_config, item)
+                        self._all += migrations
+
+                        for migration in migrations:
+                            self._by_key[migration.key] = migration
         self._loaded = True
 
 
@@ -52,11 +54,12 @@ store = MigrationsStore()
 def is_valid_migration_name(name):
     return bool(re.match(r"^[a-z0-9_]+$", name))
 
+
 def is_valid_migration_id(name):
     return bool(re.match(r"^\d{1,5}_[a-z0-9_]+$", name))
 
 
-def load_migration(app_config, filename):
+def load_migrations(app_config, filename):
     """ Return in instance of the migration class from the given filename from the given app_config.
     """
     module_str = app_config.name
@@ -64,5 +67,5 @@ def load_migration(app_config, filename):
     class_path_str = f"{module_str}.{MIGRATIONS_FOLDER}.{migration_name}.Migration"
     cls = import_string(class_path_str)
     app_label = app_config.label
-    instance = cls(app_label, migration_name)
-    return instance
+
+    return [cls(app_label, migration_name, alias) for alias in cls.get_allowed_databases()]

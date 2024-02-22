@@ -1,4 +1,5 @@
 # Standard library
+from functools import cached_property
 from uuid import UUID
 import logging
 
@@ -7,16 +8,43 @@ from djangae.utils import retry_on_error
 from django.conf import settings
 from django.db import models
 from django.utils.module_loading import import_string
+from pyparsing import OnlyOnce
 
 # Mass Migration
 from . import record_cache
 from .constants import DEFAULT_BACKEND
-from .exceptions import DependentMigrationNotApplied, MigrationAlreadyStarted
+from .exceptions import CannotRunOnGivenConnection, DependentMigrationNotApplied, InvalidDbAlias, MigrationAlreadyStarted
 from .models import MigrationRecord
 from .utils.transaction import get_transaction
 
 
 logger = logging.getLogger(__name__)
+
+
+# TODO: Not fond of the fact that we have 2 different ways to represent a "no selected db", None and this sentinel.
+# For migration records, see `get_database_alias_for_migration_records` in `BaseMigration` class. we use None to represent
+#  no database, because it's handy to just pass it directly to .using() calls.
+# Consider killing the sentinel.
+class NoSelectedDB:
+    def __str__(self):
+        # Calling it default here would be confusiong, since
+        # default is generally the default database alias while this is the case
+        # where no database is "forced" and Django does what is supposed to do.
+        return "auto_selected_db"
+    pass
+
+
+no_selected_db_sentinel = NoSelectedDB()
+
+
+def _get_valid_db_aliases():
+    return list(settings.DATABASES.keys()) + [no_selected_db_sentinel]
+
+
+def _is_valid_db_alias(db_alias):
+    if db_alias in _get_valid_db_aliases():
+        return True
+    return False
 
 
 class BaseMigration:
@@ -33,14 +61,51 @@ class BaseMigration:
     # this attribute.
     backend_method: str = None
 
-    def __init__(self, app_label, name):
+    # We always allow the migration to run without specifying a using. Letting Django (and Django router) do its course.
+    # If None, the migration can be run on all the available databases.
+    allowed_database_aliases = None
+
+    migration_record_db_alias = None
+
+    @classmethod
+    def get_allowed_databases(cls):
+        """
+        Returns a list of allowed database aliases for running the
+        migration assuming that letting Django (and Django router) do its
+        course is always an allowed option.
+        If `allowed_database_aliases` is None, the migration can be run on
+        all databases.
+        """
+        allowed_db_aliases = [no_selected_db_sentinel]
+        available_dbs = _get_valid_db_aliases()
+
+        if cls.allowed_database_aliases is None:  # If None we assume can run on all DBs
+            if len(available_dbs) > 1:  # If we only have one DB there's no need to add it, since we alread have the no_selected_db_sentinel
+                allowed_db_aliases += available_dbs
+        else:
+            allowed_db_aliases += cls.allowed_database_aliases
+
+        return allowed_db_aliases
+
+    def __init__(self, app_label, name, database_alias=no_selected_db_sentinel):
         self.app_label = app_label
         self.name = name
+        self.database_alias = database_alias
+        if not _is_valid_db_alias(self.database_alias):
+            valid_db_aliases = [str(x) for x in _get_valid_db_aliases()]
+            raise InvalidDbAlias(f"The provided <database_alias> is not valid. "
+                                 f"Got: <{str(self.database_alias)}>, expected valid database aliases are {', '.join(valid_db_aliases)}.")
+
+        self._check_allowed_db_aliases()
+
+    @cached_property
+    def db_for_migration_records(self):
+        return self.get_database_alias_for_migration_records()
 
     @property
     def key(self):
         """ A string which uniquely identifies this migration in the system. """
-        return f"{self.app_label}:{self.name}"
+        return f"{self.app_label}:{self.name}:{self.database_alias}"
 
     @property
     def description(self):
@@ -64,17 +129,50 @@ class BaseMigration:
             This is what should be called by the web interface to trigger the migration.
         """
         self.check_dependencies()
+        self.check_can_run_on_database()
         backend = self.get_backend()
         method = getattr(backend, self.backend_method)
         method(self)
         logger.info("Launched migration %s on backend %s", self.key, backend.__class__)
 
+    def _check_allowed_db_aliases(self):
+        for db_alias in self.get_allowed_databases():
+            if not _is_valid_db_alias(db_alias):
+                valid_db_aliases = [str(x) for x in _get_valid_db_aliases()]
+                raise InvalidDbAlias(f"Invalid allowed_database_aliases provided."
+                                     f"Got: <{db_alias}> but the expected valid database aliases are {', '.join(valid_db_aliases)}.")
+
+    def check_can_run_on_database(self) -> bool:
+        """
+        Checks if the migration can run on the given database.
+
+        Args:
+
+        Returns:
+            bool: True if the migration can run on the given database, False otherwise.
+
+        Raises:
+            CannotRunOnGivenConnection: If the migration cannot run on the given database.
+        """
+        allowed_database_aliases = self.get_allowed_databases()
+
+        can_run = (
+            self.database_alias in allowed_database_aliases or
+            self.database_alias is None
+        )
+        if not can_run:
+            raise CannotRunOnGivenConnection(
+                f"Migration {self.key} can't run on {self.database_alias}. "
+                f"The available connections are {', '.join(allowed_database_aliases)}. "
+            )
+        return can_run
+
     def can_be_started(self) -> bool:
-        return not MigrationRecord.objects.filter(key=self.key).exists()
+        return not MigrationRecord.objects.using(self.db_for_migration_records).filter(key=self.key).exists()
 
     def mark_as_started(self) -> UUID:
         """ Mark the migration as started in the database. Return the attempt UUID. """
-        with get_transaction().atomic():
+        with get_transaction().atomic(using=self.database_alias):
             if not self.can_be_started():
                 raise MigrationAlreadyStarted(
                     f"Migration {self.__class__.__name__} has already been initiated."
@@ -87,25 +185,25 @@ class BaseMigration:
         """ Mark the migration as errored in the database. """
         # TODO: Generate a proper traceback here
         error_str = f"{error.__class__.__name__}: {error}"
-        MigrationRecord.objects.filter(key=self.key).update(has_error=True, last_error=error_str)
+        MigrationRecord.objects.using(self.db_for_migration_records).filter(key=self.key).update(has_error=True, last_error=error_str)
 
     @retry_on_error()
     def mark_as_finished(self):
         """ Mark the migration as applied/finalized in the database. """
-        with get_transaction().atomic():
-            migration = MigrationRecord.objects.get(key=self.key)
+        with get_transaction().atomic(using=self.database_alias):
+            migration = MigrationRecord.objects.using(self.db_for_migration_records).get(key=self.key)
             if migration.is_applied:
                 logger.warning("Migration %s is already marked as applied.", self.key)
             else:
                 migration.is_applied = True
-                migration.save()
+                migration.save(using=self.database_alias)
                 logger.info("Migration %s finished. Marked it as applied.", self.key)
 
     def check_dependencies(self):
         """ Make sure that any migrations which this migration depends on have been applied. """
         # TODO: check that the specified migrations actually exist in the code.
         dependency_keys = [MigrationRecord.key_from_name_tuple(x) for x in self.dependencies]
-        applied_keys = MigrationRecord.objects.filter(
+        applied_keys = MigrationRecord.objects.using(self.db_for_migration_records).filter(
             is_applied=True, key__in=dependency_keys
         ).values_list("pk", flat=True)
         for dependency_key in dependency_keys:
@@ -114,6 +212,21 @@ class BaseMigration:
                     f"Migration {self.key} depends on migration {dependency_key}, which has not "
                     "yet been applied."
                 )
+
+    def get_database_alias_for_migration_records(self, database_alias):
+        """
+        Returns the database alias to save migration records into.
+        By default we let Django decide, but subclasses can override this to force migration records to be saved
+        in a specific database.
+
+        Parameters:
+        - database_alias (str): The alias of the database.
+
+        Returns:
+        - str: The database alias for migration records.
+        """
+
+        return None
 
 
 class SimpleMigration(BaseMigration):
@@ -145,7 +258,15 @@ class MapperMigration(BaseMigration):
 
     def get_queryset(self):
         """ Returns the Django queryset which is to be mapped over. """
-        raise NotImplementedError("The `get_queryset` method must be implemented by subclasses.")
+        queryset = self._get_queryset_without_namespace()
+        if self.database_alias is not no_selected_db_sentinel:
+            queryset = queryset.using(self.db_for_migration_records)
+
+        return queryset
+
+    def _get_queryset_without_namespace(self):
+        """ Returns the Django queryset which is to be mapped over. """
+        raise NotImplementedError("The `_get_queryset_without_namespace` method must be implemented by subclasses.")
 
     def operation(self, obj: models.Model) -> None:
         """ This is what will get called on each model instance in the queryset. """

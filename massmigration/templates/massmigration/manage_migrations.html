@@ -8,6 +8,7 @@
 		<tr>
 			<th>App</th>
 			<th>Migration</th>
+			<th>DB</th>
 			<th>Status</th>
 			<th>Actions</th>
 		</tr>
@@ -17,6 +18,7 @@
 		<tr>
 			<td>{{migration.app_label}}</td>
 			<td><a href="{% url 'massmigration_detail' key=migration.key %}">{{migration.name}}</a></td>
+			<td>{{migration.database_alias}}</td>
 			<td>{% if migration.record %}{{migration.record.status}}{% else %}NOT RUN{% endif %}</td>
 			<td>
 				{% if not migration.record %}<a href="{% url 'massmigration_run' key=migration.key %}">Run...</a>
