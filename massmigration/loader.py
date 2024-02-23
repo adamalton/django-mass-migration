@@ -19,6 +19,7 @@ class MigrationsStore:
         self._loaded = False
         self._all = []
         self._by_key = {}
+        self._migrations_by_record_db_alias = {}
 
     @property
     def all(self):
@@ -31,6 +32,12 @@ class MigrationsStore:
         if not self._loaded:
             self.load()
         return self._by_key
+
+    @property
+    def migrations_by_record_db_alias(self):
+        if not self._loaded:
+            self.load()
+        return self._migrations_by_record_db_alias
 
     def load(self):
         """ Load all the migration instances from all migration files found in installed apps. """
@@ -45,6 +52,8 @@ class MigrationsStore:
 
                         for migration in migrations:
                             self._by_key[migration.key] = migration
+                            self._migrations_by_record_db_alias.setdefault(migration.db_for_migration_records, []).append(migration)
+
         self._loaded = True
 
 

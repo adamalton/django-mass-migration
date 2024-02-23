@@ -13,9 +13,24 @@ from massmigration.utils.permissions import superuser_required
 @superuser_required()
 def manage_migrations(request):
     """ A page to manage mass migrations. """
+    # TODO: Allow the user to filter the migration by database.
+    # We should probably allow to:
+    # 1. Let django (django router) pick the righ migrations
+    # 2. Let the user to force to see all the migrations in all the databases
+    # 3. Let the user to see the migrations in a specific database
+    # The view currently implements option 2.
+
     migrations = store.all
-    # Load the migration records in one query to avoid a separate query for each one
-    records_by_key = MigrationRecord.objects.in_bulk()
+    records_by_key = {}
+
+    # Migration records could be store in different databases, so we need to loop through all.
+    for db_alias in store.migrations_by_record_db_alias.keys():
+        # Load the migration records in one query to avoid a separate query for each one
+        records_by_key = {
+            **records_by_key,
+            **MigrationRecord.objects.using(db_alias).in_bulk(),
+        }
+
     for migration in migrations:
         migration.record = records_by_key.get(migration.key)
     context = {

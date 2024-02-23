@@ -100,7 +100,7 @@ class BaseMigration:
 
     @cached_property
     def db_for_migration_records(self):
-        return self.get_database_alias_for_migration_records()
+        return self.get_database_alias_for_migration_records(self.database_alias)
 
     @property
     def key(self):
