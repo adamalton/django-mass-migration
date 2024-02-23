@@ -76,14 +76,13 @@ class BaseMigration:
         If `allowed_database_aliases` is None, the migration can be run on
         all databases.
         """
-        allowed_db_aliases = [no_selected_db_sentinel]
         available_dbs = _get_valid_db_aliases()
 
         if cls.allowed_database_aliases is None:  # If None we assume can run on all DBs
             if len(available_dbs) > 1:  # If we only have one DB there's no need to add it, since we alread have the no_selected_db_sentinel
-                allowed_db_aliases += available_dbs
+                allowed_db_aliases = available_dbs
         else:
-            allowed_db_aliases += cls.allowed_database_aliases
+            allowed_db_aliases =  [no_selected_db_sentinel] + cls.allowed_database_aliases
 
         return allowed_db_aliases
 
@@ -260,7 +259,7 @@ class MapperMigration(BaseMigration):
         """ Returns the Django queryset which is to be mapped over. """
         queryset = self._get_queryset_without_namespace()
         if self.database_alias is not no_selected_db_sentinel:
-            queryset = queryset.using(self.db_for_migration_records)
+            queryset = queryset.using(self.database_alias)
 
         return queryset
 
