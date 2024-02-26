@@ -82,7 +82,7 @@ class BaseMigration:
             if len(available_dbs) > 1:  # If we only have one DB there's no need to add it, since we alread have the no_selected_db_sentinel
                 allowed_db_aliases = available_dbs
         else:
-            allowed_db_aliases =  [no_selected_db_sentinel] + cls.allowed_database_aliases
+            allowed_db_aliases = cls.allowed_database_aliases
 
         return allowed_db_aliases
 
