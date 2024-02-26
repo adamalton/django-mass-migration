@@ -46,7 +46,6 @@ class DjangaeBackend(BackendBase):
                 self._call_mapper_wrapped_operation,
                 self._mark_mapper_as_finished,
                 key_ranges_getter=key_ranges_getter,
-                using=queryset.db,
                 migration=migration,
                 attempt_uuid=attempt_uuid,
                 _queue=self._get_queue_name(migration),

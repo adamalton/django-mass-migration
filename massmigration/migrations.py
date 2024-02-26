@@ -76,9 +76,9 @@ class BaseMigration:
         If `allowed_database_aliases` is None, the migration can be run on
         all databases.
         """
-        available_dbs = _get_valid_db_aliases()
 
         if cls.allowed_database_aliases is None:  # If None we assume can run on all DBs
+            available_dbs = _get_valid_db_aliases()
             if len(available_dbs) > 1:  # If we only have one DB there's no need to add it, since we alread have the no_selected_db_sentinel
                 allowed_db_aliases = available_dbs
         else:
