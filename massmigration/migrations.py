@@ -85,7 +85,14 @@ class BaseMigration:
 
     @cached_property
     def db_for_migration_records(self):
-        return self.get_database_alias_for_migration_records(self.database_alias)
+        db_alias_for_migration_records = self.get_database_alias_for_migration_records(self.database_alias)
+
+        if db_alias_for_migration_records not in _get_valid_db_aliases():
+            valid_db_aliases = [str(x) for x in _get_valid_db_aliases()]
+            raise InvalidDbAlias(f"Invalid db_alias_for_migration_records provided."
+                                 f"Got: <{db_alias_for_migration_records}> but the expected valid database aliases are {', '.join(valid_db_aliases)}.")
+
+        return db_alias_for_migration_records
 
     @property
     def key(self):
