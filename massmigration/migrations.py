@@ -219,6 +219,19 @@ class BaseMigration:
 
         return None
 
+    def get_migration_record(self):
+        """
+        Returns the migration record for the migration.
+
+        Returns:
+        - MigrationRecord: The migration record for the migration.
+        """
+        try:
+            return MigrationRecord.objects.using(self.db_for_migration_records).get(key=self.key)
+        except MigrationRecord.DoesNotExist:
+            return None
+
+
 
 class SimpleMigration(BaseMigration):
     """ A migration which only needs to apply a very quick and simple change to the database which

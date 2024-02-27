@@ -43,7 +43,7 @@ def manage_migrations(request):
 def run_migration(request, key):
     """ Trigger the running of a migration. """
     migration = store.by_key.get(key)
-    record = MigrationRecord.objects.filter(key=key).first()
+    record = migration.get_migration_record()
     if not migration:
         raise Http404(f"Migration with key '{key}' not found.")
     if record:
@@ -71,10 +71,17 @@ def run_migration(request, key):
 def migration_detail(request, key):
     """ View the details of a single migration. """
     migration = store.by_key.get(key)
-    record = MigrationRecord.objects.filter(key=key).first()
+    record = migration.get_migration_record()
     dependencies = []
     dependency_keys = [MigrationRecord.key_from_name_tuple(x) for x in migration.dependencies]
-    dependency_records_by_key = MigrationRecord.objects.in_bulk(dependency_keys)
+    dependency_records_by_key = {}
+
+    for db in store.migrations_by_record_db_alias.keys():
+        dependency_records_by_key = {
+            **dependency_records_by_key,
+            **MigrationRecord.objects.using(db).in_bulk(dependency_keys),
+        }
+
     for dep_key in dependency_keys:
         dependencies.append({
             "key": dep_key,
@@ -93,7 +100,7 @@ def migration_detail(request, key):
 def delete_migration(request, key):
     """ Delete a migration which has already started or has errored. """
     migration = store.by_key.get(key)
-    record = MigrationRecord.objects.filter(key=key).first()
+    record = migration.get_migration_record()
     if not migration:
         raise Http404(f"Migration with key {key} not found.")
     if not record:
