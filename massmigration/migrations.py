@@ -21,24 +21,10 @@ from .utils.transaction import get_transaction
 logger = logging.getLogger(__name__)
 
 
-# TODO: Not fond of the fact that we have 2 different ways to represent a "no selected db", None and this sentinel.
-# For migration records, see `get_database_alias_for_migration_records` in `BaseMigration` class. we use None to represent
-#  no database, because it's handy to just pass it directly to .using() calls.
-# Consider killing the sentinel.
-class NoSelectedDB:
-    def __str__(self):
-        # Calling it default here would be confusiong, since
-        # default is generally the default database alias while this is the case
-        # where no database is "forced" and Django does what is supposed to do.
-        return "auto_selected_db"
-    pass
-
-
-no_selected_db_sentinel = NoSelectedDB()
-
-
 def _get_valid_db_aliases():
-    return list(settings.DATABASES.keys()) + [no_selected_db_sentinel]
+    # We append None here to allow the migration to run without specifying a using and therefore
+    # allowing django/django router to do its course.
+    return list(settings.DATABASES.keys()) + [None]
 
 
 def _is_valid_db_alias(db_alias):
@@ -79,14 +65,14 @@ class BaseMigration:
 
         if cls.allowed_database_aliases is None:  # If None we assume can run on all DBs
             available_dbs = _get_valid_db_aliases()
-            if len(available_dbs) > 1:  # If we only have one DB there's no need to add it, since we alread have the no_selected_db_sentinel
+            if len(available_dbs) > 1:  # If we only have one DB there's no need to add it, since we alread have the None
                 allowed_db_aliases = available_dbs
         else:
-            allowed_db_aliases = cls.allowed_database_aliases + [no_selected_db_sentinel]
+            allowed_db_aliases = cls.allowed_database_aliases + [None]
 
         return allowed_db_aliases
 
-    def __init__(self, app_label, name, database_alias=no_selected_db_sentinel):
+    def __init__(self, app_label, name, database_alias=None):
         self.app_label = app_label
         self.name = name
         self.database_alias = database_alias
@@ -258,7 +244,7 @@ class MapperMigration(BaseMigration):
     def get_queryset(self):
         """ Returns the Django queryset which is to be mapped over. """
         queryset = self._get_queryset_without_namespace()
-        if self.database_alias is not no_selected_db_sentinel:
+        if self.database_alias is not None:
             queryset = queryset.using(self.database_alias)
 
         return queryset

@@ -12,6 +12,10 @@
 		<td>{{migration.backend_str}}</td>
 	</tr>
 	<tr scope="row">
+		<th>Database</th>
+		<td>{{migration.database_alias|default:"autoselect_db"}}</td>
+	</tr>
+	<tr scope="row">
 		<th>Dependencies</th>
 		<td>
 			{% for dependency in dependencies %}

@@ -6,7 +6,7 @@
 <h2>{{migration.key}}</h2>
 <p>{{migration.description}}</p>
 <p class="pt">
-	This will launch the processing of the migration using the backend <code>{{migration.backend_str}}</code>.
+	This will launch the processing of the migration using the backend <code>{{migration.backend_str}} on {{migration.database_alias|"autoselect_db"}} db</code>.
 </p>
 
 <form method="post" action="" class="pt">
