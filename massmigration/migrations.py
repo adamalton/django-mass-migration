@@ -149,8 +149,7 @@ class BaseMigration:
         allowed_database_aliases = self.get_allowed_databases()
 
         can_run = (
-            self.database_alias in allowed_database_aliases or
-            self.database_alias is None
+            self.database_alias in _get_valid_db_aliases()
         )
         if not can_run:
             raise CannotRunOnGivenConnection(
@@ -169,7 +168,7 @@ class BaseMigration:
                 raise MigrationAlreadyStarted(
                     f"Migration {self.__class__.__name__} has already been initiated."
                 )
-            migration = MigrationRecord.objects.create(key=self.key)
+            migration = MigrationRecord.objects.using(self.db_for_migration_records).create(key=self.key)
             return migration.attempt_uuid
 
     @retry_on_error()
@@ -188,7 +187,7 @@ class BaseMigration:
                 logger.warning("Migration %s is already marked as applied.", self.key)
             else:
                 migration.is_applied = True
-                migration.save(using=self.database_alias)
+                migration.save(using=self.db_for_migration_records)
                 logger.info("Migration %s finished. Marked it as applied.", self.key)
 
     def check_dependencies(self):
