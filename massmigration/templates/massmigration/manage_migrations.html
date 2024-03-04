@@ -8,23 +8,33 @@
 		<tr>
 			<th>App</th>
 			<th>Migration</th>
-			<th>Status</th>
-			<th>Actions</th>
+			{% for db in available_db_aliases %}
+				<th>{{db|default:"autoselect_db"}}</th>
+			{% endfor %}
 		</tr>
 	</thead>
 	<tbody>
-	{% for migration in migrations %}
-		<tr>
-			<td>{{migration.app_label}}</td>
-			<td><a href="{% url 'massmigration_detail' key=migration.key %}">{{migration.name}}</a></td>
-			<td>{% if migration.record %}{{migration.record.status}}{% else %}NOT RUN{% endif %}</td>
-			<td>
-				{% if not migration.record %}<a href="{% url 'massmigration_run' key=migration.key %}">Run...</a>
-				{% else %}<a href="{% url 'massmigration_delete' key=migration.key %}">Delete...</a>
-				{% endif %}
-			</td>
-		</tr>
-	{% endfor %}
+		{% for migration in migrations %}
+			<tr>
+				<td>{{migration.app_label}}</td>
+				<td><a>{{migration.name}}</a></td>
+				{% for db_alias, migration_record in migration.records_map.items %}
+				<td>
+					<div>
+						<a href="{% url 'massmigration_detail' key=migration.key%}{% if db_alias %}?db_alias={{db_alias}}{% endif %}">Details</a>
+					</div>
+					<div>{% if migration_record %}{{migration_record.status}}{% else %}NOT RUN{% endif %}</div>
+					<div>
+						{% if not migration_record %}
+							<a href="{% url 'massmigration_run' key=migration.key%}{% if db_alias %}?db_alias={{db_alias}}{% endif %}">Run...</a>
+						{% else %}
+							<a href="{% url 'massmigration_delete' key=migration.key%}{% if db_alias %}?db_alias={{db_alias}{% endif %}">Delete...</a>
+						{% endif %}
+					</div>
+				</td>
+				{% endfor %}
+			</tr>
+		{% endfor %}
 	</tbody>
 </table>
 

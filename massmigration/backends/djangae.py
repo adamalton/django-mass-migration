@@ -34,13 +34,13 @@ class DjangaeBackend(BackendBase):
         defer(migration.wrapped_operation, _queue=self._get_queue_name(migration))
         logger.info("Deferred task to run single-task migration %s", migration.key)
 
-    def run_mapper(self, migration):
+    def run_mapper(self, migration, db_alias=None):
         # Use `defer_iteration_with_finalize` to do the processing with whichever key_ranges_getter
         # is appropriate for the DB.
-        queryset = migration.get_queryset()
+        queryset = migration.get_queryset().using(db_alias)
         key_ranges_getter = self._key_ranges_getter(queryset)
         with get_transaction().atomic():
-            attempt_uuid = migration.mark_as_started()
+            attempt_uuid = migration.mark_as_started(db_alias)
             defer_iteration_with_finalize(
                 queryset,
                 self._call_mapper_wrapped_operation,
@@ -48,6 +48,7 @@ class DjangaeBackend(BackendBase):
                 key_ranges_getter=key_ranges_getter,
                 migration=migration,
                 attempt_uuid=attempt_uuid,
+                db_alias=db_alias,
                 _queue=self._get_queue_name(migration),
                 _transactional=True,
             )
@@ -62,12 +63,12 @@ class DjangaeBackend(BackendBase):
             raise NotImplementedError("Please configure settings.MASSMIGRATION_TASK_QUEUE.")
         return queue
 
-    def _call_mapper_wrapped_operation(self, instance, migration, attempt_uuid):
-        migration.wrapped_operation(instance, attempt_uuid)
+    def _call_mapper_wrapped_operation(self, instance, migration, attempt_uuid, db_alias):
+        migration.wrapped_operation(instance, attempt_uuid, db_alias)
 
-    def _mark_mapper_as_finished(self, migration, attempt_uuid):
+    def _mark_mapper_as_finished(self, migration, attempt_uuid, db_alias):
         logger.info("Marking migration %s (attempt %s) as finished.", migration.key, attempt_uuid)
-        migration.mark_as_finished()
+        migration.mark_as_finished(db_alias)
 
     def _key_ranges_getter(self, queryset):
         # TODO: this could be better at handling the different cases

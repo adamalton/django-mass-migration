@@ -11,12 +11,22 @@ from django.utils.module_loading import import_string
 # Mass Migration
 from . import record_cache
 from .constants import DEFAULT_BACKEND
-from .exceptions import DependentMigrationNotApplied, MigrationAlreadyStarted
+from .exceptions import CannotRunOnDB, DependentMigrationNotApplied, MigrationAlreadyStarted
 from .models import MigrationRecord
 from .utils.transaction import get_transaction
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_all_db_aliases():
+    # We append None here to allow the migration to run without specifying a using and therefore
+    # allowing django/django router to do its course.
+    return list(settings.DATABASES.keys()) + [None]
+
+
+def _is_valid_db_alias(db_alias):
+    return db_alias in get_all_db_aliases()
 
 
 class BaseMigration:
@@ -59,41 +69,55 @@ class BaseMigration:
         backend_class = import_string(self.backend_str)
         return backend_class()
 
-    def launch(self):
+    def get_migration_record_key(self, db_alias):
+        db_alias_str = db_alias if db_alias is not None else "autoselect_db"
+        return f"{self.key}:{db_alias_str}"
+
+    def get_migration_record(self, db_alias):
+        return MigrationRecord.objects.filter(key=self.get_migration_record_key(db_alias)).first()
+
+    def launch(self, database_alias=None):
         """ Pass the migration to the backend to perform the data operation(s).
             This is what should be called by the web interface to trigger the migration.
         """
+        if not _is_valid_db_alias(database_alias):
+            raise CannotRunOnDB(
+                f"Migration {self.key} can't run on {self.database_alias}. "
+                f"The available dbs are {', '.join(get_all_db_aliases)}. ")
+
         self.check_dependencies()
         backend = self.get_backend()
         method = getattr(backend, self.backend_method)
-        method(self)
+        method(self, database_alias)
         logger.info("Launched migration %s on backend %s", self.key, backend.__class__)
 
-    def can_be_started(self) -> bool:
-        return not MigrationRecord.objects.filter(key=self.key).exists()
+    def can_be_started(self, db_alias) -> bool:
+        return not MigrationRecord.objects.filter(key=self.get_migration_record_key(db_alias)).exists()
 
-    def mark_as_started(self) -> UUID:
+    def mark_as_started(self, db_alias) -> UUID:
         """ Mark the migration as started in the database. Return the attempt UUID. """
         with get_transaction().atomic():
-            if not self.can_be_started():
+            if not self.can_be_started(db_alias):
                 raise MigrationAlreadyStarted(
                     f"Migration {self.__class__.__name__} has already been initiated."
                 )
-            migration = MigrationRecord.objects.create(key=self.key)
+            migration = MigrationRecord.objects.create(
+                key=self.get_migration_record_key(db_alias)
+            )
             return migration.attempt_uuid
 
     @retry_on_error()
-    def mark_as_errored(self, error=None):
+    def mark_as_errored(self, db_alias, error=None):
         """ Mark the migration as errored in the database. """
         # TODO: Generate a proper traceback here
         error_str = f"{error.__class__.__name__}: {error}"
-        MigrationRecord.objects.filter(key=self.key).update(has_error=True, last_error=error_str)
+        MigrationRecord.objects.filter(key=self.get_migration_record_key(db_alias)).update(has_error=True, last_error=error_str)
 
     @retry_on_error()
-    def mark_as_finished(self):
+    def mark_as_finished(self, db_alias):
         """ Mark the migration as applied/finalized in the database. """
         with get_transaction().atomic():
-            migration = MigrationRecord.objects.get(key=self.key)
+            migration = MigrationRecord.objects.get(key=self.get_migration_record_key(db_alias))
             if migration.is_applied:
                 logger.warning("Migration %s is already marked as applied.", self.key)
             else:
@@ -151,12 +175,12 @@ class MapperMigration(BaseMigration):
         """ This is what will get called on each model instance in the queryset. """
         raise NotImplementedError("The `operation` method must be implemented by subclasses.")
 
-    def wrapped_operation(self, obj, attempt_uuid):
+    def wrapped_operation(self, obj, attempt_uuid, db_alias):
         """ Call self.operation() on the object, but wrap it to catch any errors and set the
             migration as failed if necessary.
         """
         key = self.key
-        record = record_cache.get_record(key)
+        record = record_cache.get_record(self.get_migration_record_key(db_alias))
         if record is None:
             logger.warning(
                 "Migration %s no longer exists in the DB. Skipping processing operation.", key
@@ -189,4 +213,4 @@ class MapperMigration(BaseMigration):
                     obj.__class__.__name__,
                     obj.pk,
                 )
-                self.mark_as_errored(error)
+                self.mark_as_errored(error, db_alias)

@@ -12,11 +12,15 @@
 		<td>{{migration.backend_str}}</td>
 	</tr>
 	<tr scope="row">
+		<th>Database</th>
+		<td>{{db_alias|default:"autoselect_db"}}</td>
+	</tr>
+	<tr scope="row">
 		<th>Dependencies</th>
 		<td>
 			{% for dependency in dependencies %}
 				<div>
-					<a href="{% url 'massmigration_detail' key=dependency.key %}">{{dependency.key}}</a>
+					<a href="{% url 'massmigration_detail' key=dependency.key %}{% if db_alias%}?db_alias={{db_alias}}{% endif %}">{{dependency.key}}</a>
 					({% if dependency.record %}{{dependency.record.status}}{% else %}NOT RUN{% endif %})
 				</div>
 			{% empty %}
@@ -51,8 +55,8 @@
 </table>
 <h2>Actions</h2>
 <p>
-	{% if not record %}<a href="{% url 'massmigration_run' key=migration.key %}">Run...</a>
-	{% else %}<a href="{% url 'massmigration_delete' key=migration.key %}">Cancel/Delete...</a>
+	{% if not record %}<a href="{% url 'massmigration_run' key=migration.key %}{% if db_alias%}?db_alias={{db_alias}}{% endif %}">Run...</a>
+	{% else %}<a href="{% url 'massmigration_delete' key=migration.key %}{% if db_alias%}?db_alias={{db_alias}}{% endif %}">Cancel/Delete...</a>
 	{% endif %}
 </p>
 
