@@ -154,6 +154,9 @@ class BaseMigration:
                     "yet been applied."
                 )
 
+    def get_migration_record(self, db_alias):
+        return MigrationRecord.objects.using(db_alias).filter(key=self.key).first()
+
 
 class SimpleMigration(BaseMigration):
     """ A migration which only needs to apply a very quick and simple change to the database which

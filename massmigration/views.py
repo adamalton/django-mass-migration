@@ -17,18 +17,21 @@ def manage_migrations(request):
     """ A page to manage mass migrations. """
     migrations = store.all
     available_db_aliases = get_all_db_aliases()
-    # Load the migration records in one query to avoid a separate query for each one
 
-    migration_records_by_db_alias = OrderedDict([
-        (db_alias, MigrationRecord.objects.using(db_alias).in_bulk())
+    # Load the migration in bulk from every db to avoid a separate query for each one
+    migration_records_by_db_alias = {
+        db_alias: MigrationRecord.objects.using(db_alias).in_bulk()
         for db_alias in available_db_aliases
-    ])
+    }
 
     for migration in migrations:
-        migration.records_map = OrderedDict([
-            (db_alias, migration_records_by_db_alias.get(db_alias, None))
-            for db_alias in available_db_aliases
-        ])
+        migration.records_map = OrderedDict()
+
+        for db_alias in available_db_aliases:
+            migration.records_map[db_alias] = {
+                "is_allowed_on_db_alias": db_alias in migration.get_allowed_database_aliases(),
+                "record": migration_records_by_db_alias.get(db_alias, None)
+            }
 
     context = {
         "migrations": migrations,
@@ -70,28 +73,22 @@ def run_migration(request, key):
 def migration_detail(request, key):
     """ View the details of a single migration. """
     migration = store.by_key.get(key)
-
-    dependencies_by_db_alias = {}
+    db_alias = request.GET.get("db_alias", None)
+    record = MigrationRecord.objects.using(db_alias).filter(key=key).first()
+    dependencies = []
     dependency_keys = [MigrationRecord.key_from_name_tuple(x) for x in migration.dependencies]
-
-    migration_records_by_db_alias = {
-        db_alias: MigrationRecord.objects.in_bulk((dependency_keys).using(db_alias))
-        for db_alias in migration.get_allowed_database_aliases()
-    }
-
-    for db_alias in migration.get_allowed_database_aliases():
-        dependency_records_by_key = migration_records_by_db_alias[db_alias]
-        dependencies_by_db_alias[db_alias] = []
-        for dep_key in dependency_keys:
-            dependencies_by_db_alias[db_alias].append({
-                "key": dep_key,
-                "record": dependency_records_by_key.get(dep_key),
-            })
-
+    dependency_records_by_key = MigrationRecord.objects.using(db_alias).in_bulk(dependency_keys)
+    for dep_key in dependency_keys:
+        dependencies.append({
+            "key": dep_key,
+            "record": dependency_records_by_key.get(dep_key),
+        })
     context = {
         "migration": migration,
-        "records_by_db_alias": migration_records_by_db_alias,
-        "dependencies_by_db_alias": dependencies_by_db_alias,
+        "record": record,
+        "dependencies": dependencies,
+        "db_alias": db_alias,
+
     }
     return render(request, "massmigration/migration_detail.html", context)
 
