@@ -41,9 +41,8 @@ def manage_migrations(request):
 
 
 @superuser_required()
-def run_migration(request, key):
+def run_migration(request, key, db_alias):
     """ Trigger the running of a migration. """
-    db_alias = request.GET.get("db_alias", None)
     migration = store.by_key.get(key)
     record = migration.get_migration_record(db_alias)
     if not migration:
@@ -70,10 +69,10 @@ def run_migration(request, key):
 
 
 @superuser_required()
-def migration_detail(request, key):
+def migration_detail(request, key, db_alias):
     """ View the details of a single migration. """
+    # TODO: Show the migrations and their records for any db_alias rather than just the one.
     migration = store.by_key.get(key)
-    db_alias = request.GET.get("db_alias", None)
     record = MigrationRecord.objects.using(db_alias).filter(key=key).first()
     dependencies = []
     dependency_keys = [MigrationRecord.key_from_name_tuple(x) for x in migration.dependencies]
@@ -94,11 +93,9 @@ def migration_detail(request, key):
 
 
 @superuser_required()
-def delete_migration(request, key):
+def delete_migration(request, key, db_alias):
     """ Delete a migration which has already started or has errored. """
     migration = store.by_key.get(key)
-    db_alias = request.GET.get("db_alias", None)
-
     record = migration.get_migration_record(db_alias)
     if not migration:
         raise Http404(f"Migration with key {key} for db {db_alias} not found.")

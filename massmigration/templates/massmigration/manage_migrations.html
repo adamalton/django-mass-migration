@@ -23,14 +23,14 @@
 					 	{% with migration_record=migration_for_alias.record %}
 						<td>
 							<div>
-								<a href="{% url 'massmigration_detail' key=migration.key %}{% if db_alias %}?db_alias={{db_alias}}{% endif %}">Detail</a>
+								<a href="{% url 'massmigration_detail' key=migration.key db_alias=db_alias%}">Detail</a>
 							</div>
 							<div>{% if migration_record %}{{migration_record.status}}{% else %}NOT RUN{% endif %}</div>
 							<div>
 								{% if not migration_record %}
-									<a href="{% url 'massmigration_run' key=migration.key%}{% if db_alias %}?db_alias={{db_alias}}{% endif %}">Run...</a>
+									<a href="{% url 'massmigration_run' key=migration.key db_alias=db_alias %}">Run...</a>
 								{% else %}
-									<a href="{% url 'massmigration_delete' key=migration.key%}{% if db_alias %}?db_alias={{db_alias}}{% endif %}">Delete...</a>
+									<a href="{% url 'massmigration_delete' key=migration.key db_alias=db_alias %}">Delete...</a>
 								{% endif %}
 							</div>
 						</td>
