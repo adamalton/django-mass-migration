@@ -8,6 +8,10 @@ class Migration(SimpleMigration):
     # that's specified in the Django settings
     backend: str = None
 
+    dependencies = [
+        ('app_name', '001_move_something'),
+    ]
+
     dependencies = [{% for dependency in dependencies %}
         ("{{dependency.0}}", "{{dependency.1}}"),{% endfor %}
     ]

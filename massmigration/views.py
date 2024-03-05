@@ -16,17 +16,23 @@ from massmigration.utils.permissions import superuser_required
 def manage_migrations(request):
     """ A page to manage mass migrations. """
     migrations = store.all
+    available_db_aliases = get_all_db_aliases()
     # Load the migration records in one query to avoid a separate query for each one
-    records_by_key = MigrationRecord.objects.in_bulk()
+
+    migration_records_by_db_alias = OrderedDict([
+        (db_alias, MigrationRecord.objects.in_bulk().using(db_alias))
+        for db_alias in available_db_aliases
+    ])
+
     for migration in migrations:
         migration.records_map = OrderedDict([
-            (db_alias, records_by_key.get(migration.get_migration_record_key(db_alias)))
-            for db_alias in get_all_db_aliases()
+            (db_alias, migration_records_by_db_alias.get(db_alias, None))
+            for db_alias in available_db_aliases
         ])
 
     context = {
         "migrations": migrations,
-        "available_db_aliases": get_all_db_aliases(),
+        "available_db_aliases": available_db_aliases,
     }
     return render(request, "massmigration/manage_migrations.html", context)
 

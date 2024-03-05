@@ -13,7 +13,9 @@ from .utils.functional import MemoizedLazyList
 
 
 class MigrationRecord(models.Model):
-    """ Stores a record of a particular migration being applied to the database. """
+    """ Stores a record of a particular migration being applied to the database.
+    The assumption is these models are stored on the same DB the migration has been applied to.
+    """
 
     class Status(models.TextField):
         APPLIED = "APPLIED"
@@ -24,6 +26,7 @@ class MigrationRecord(models.Model):
     # I'm still not sure whether the key should be computed from the app_label and name or the
     # other way round. The app_label at least is good for filtering in the Django admin though.
     key = models.CharField(max_length=250, primary_key=True)
+
     app_label = ComputedCharField(
         "_app_label", max_length=100, choices=MemoizedLazyList(get_app_label_choices)
     )
@@ -47,6 +50,9 @@ class MigrationRecord(models.Model):
     has_error = models.BooleanField(default=False)
     last_error = models.TextField(blank=True)
     was_faked = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("app_label", "name")
 
     def _app_label(self):
         return self.key.split(":")[0]
