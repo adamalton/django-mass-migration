@@ -11,7 +11,12 @@ from django.utils.module_loading import import_string
 # Mass Migration
 from . import record_cache
 from .constants import DEFAULT_BACKEND
-from .exceptions import CannotRunOnDB, DbAliasNotAllowed, DependentMigrationNotApplied, MigrationAlreadyStarted
+from .exceptions import (
+    CannotRunOnDB,
+    DbAliasNotAllowed,
+    DependentMigrationNotApplied,
+    MigrationAlreadyStarted
+)
 from .models import MigrationRecord
 from .utils.transaction import get_transaction
 
@@ -19,18 +24,14 @@ from .utils.transaction import get_transaction
 logger = logging.getLogger(__name__)
 
 
+# TODO: Is there a better place for this?
 def get_all_db_aliases():
     return list(settings.DATABASES.keys())
-
-
-def _is_valid_db_alias(db_alias):
-    return db_alias in get_all_db_aliases()
 
 
 class BaseMigration:
     """ An operation to be performed on the database. """
 
-    # TODO validate this are availabe in settings.DATABASES
     allowed_db_aliases = None
 
     dependencies = []  # A list of (app_label, migration_name) pairs
@@ -49,12 +50,12 @@ class BaseMigration:
         all_db_aliases = get_all_db_aliases()
 
         if (
-            cls.allowed_db_aliases is not None and  ## If not set, then all dbs are allowed
+            cls.allowed_db_aliases is not None and  # If not set, then all dbs are allowed
             any([allowed_db not in all_db_aliases for allowed_db in cls.allowed_db_aliases])
         ):
             raise DbAliasNotAllowed(
                     f"Provided Migration <allowed_database_alias> for {self.key} Migration are invalid."
-                    f"Got {cls.allowed_db_aliases} while the available dbs are {', '.join(all_db_aliases)}. "
+                    f"Got <{cls.allowed_db_aliases}> while the available dbs are {', '.join(all_db_aliases)}. "
                 )
 
     @classmethod
@@ -93,10 +94,11 @@ class BaseMigration:
         """ Pass the migration to the backend to perform the data operation(s).
             This is what should be called by the web interface to trigger the migration.
         """
-        if db_alias not in self.get_allowed_db_aliases():
+        allowed_db_aliases = self.get_allowed_db_aliases()
+        if db_alias not in allowed_db_aliases:
             raise CannotRunOnDB(
                 f"Migration {self.key} can't run on {self.database_alias}. "
-                f"The available dbs are {', '.join(self.get_allowed_db_aliases())}. "
+                f"The available dbs are {', '.join(allowed_db_aliases)}. "
             )
 
         self.check_dependencies(db_alias)
