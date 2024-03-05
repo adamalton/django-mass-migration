@@ -5,54 +5,58 @@
 <h1>Migration <code>{{migration.key}}</h1>
 <p>{{migration.description}}</p>
 
-<table class="table mt">
+{% for db_alias, record in migration.records_map.items %}
 
-	<tr scope="row">
-		<th>Backend</th>
-		<td>{{migration.backend_str}}</td>
-	</tr>
-	<tr scope="row">
-		<th>Database</th>
-		<td>{{db_alias}}</td>
-	</tr>
-	<tr scope="row">
-		<th>Dependencies</th>
-		<td>
-			{% for dependency in dependencies %}
-				<div>
-					<a href="{% url 'massmigration_detail' key=dependency.key %}{% if db_alias%}?db_alias={{db_alias}}{% endif %}">{{dependency.key}}</a>
-					({% if dependency.record %}{{dependency.record.status}}{% else %}NOT RUN{% endif %})
-				</div>
-			{% empty %}
-				None
-			{% endfor %}
-		</td>
-	</tr>
-	<tr scope="row">
-		<th>Status</th>
-		<td>{% if record %}{{record.status}}{% else %}NOT RUN{% endif %}</td>
-	</tr>
-	<tr scope="row">
-		<th>Started at</th>
-		<td>{{record.initiated_at|default:'-'}}</td>
-	</tr>
-	<tr scope="row">
-		<th>Finished at</th>
-		<td>{{record.applied_at|default:'-'}}</td>
-	</tr>
-	<tr scope="row">
-		<th>Was faked</th>
-		<td>{% if record.applied_at %}{{record.was_faked|yesno}}{% else %}-{% endif %}</td>
-	</tr>
-	<tr scope="row">
-		<th>Has error</th>
-		<td>{{record.has_error|yesno}}</td>
-	</tr>
-	<tr scope="row">
-		<th>Last error</th>
-		<td><code>{{record.last_error|default:'-'}}</code></td>
-	</tr>
-</table>
+	<h2>Database: {{db_alias}}</h2>
+
+	<table class="table mt">
+
+		<tr scope="row">
+			<th>Backend</th>
+			<td>{{migration.backend_str}}</td>
+		</tr>
+		<tr scope="row">
+			<th>Database</th>
+			<td>{{db_alias}}</td>
+		</tr>
+		<tr scope="row">
+			<th>Dependencies</th>
+			<td>
+				{% for dependency in dependencies_by_db_alias[db_alias] %}
+					<div>
+						<a href="{% url 'massmigration_detail' key=dependency.key %}{% if db_alias%}?db_alias={{db_alias}}{% endif %}">{{dependency.key}}</a>
+						({% if dependency.record %}{{dependency.record.status}}{% else %}NOT RUN{% endif %})
+					</div>
+				{% empty %}
+					None
+				{% endfor %}
+			</td>
+		</tr>
+		<tr scope="row">
+			<th>Status</th>
+			<td>{% if record %}{{record.status}}{% else %}NOT RUN{% endif %}</td>
+		</tr>
+		<tr scope="row">
+			<th>Started at</th>
+			<td>{{record.initiated_at|default:'-'}}</td>
+		</tr>
+		<tr scope="row">
+			<th>Finished at</th>
+			<td>{{record.applied_at|default:'-'}}</td>
+		</tr>
+		<tr scope="row">
+			<th>Was faked</th>
+			<td>{% if record.applied_at %}{{record.was_faked|yesno}}{% else %}-{% endif %}</td>
+		</tr>
+		<tr scope="row">
+			<th>Has error</th>
+			<td>{{record.has_error|yesno}}</td>
+		</tr>
+		<tr scope="row">
+			<th>Last error</th>
+			<td><code>{{record.last_error|default:'-'}}</code></td>
+		</tr>
+	</table>
 <h2>Actions</h2>
 <p>
 	{% if not record %}<a href="{% url 'massmigration_run' key=migration.key %}{% if db_alias%}?db_alias={{db_alias}}{% endif %}">Run...</a>

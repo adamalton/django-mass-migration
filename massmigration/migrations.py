@@ -11,7 +11,7 @@ from django.utils.module_loading import import_string
 # Mass Migration
 from . import record_cache
 from .constants import DEFAULT_BACKEND
-from .exceptions import CannotRunOnDB, DependentMigrationNotApplied, MigrationAlreadyStarted
+from .exceptions import CannotRunOnDB, DbAliasNotAllowed, DependentMigrationNotApplied, MigrationAlreadyStarted
 from .models import MigrationRecord
 from .utils.transaction import get_transaction
 
@@ -30,6 +30,9 @@ def _is_valid_db_alias(db_alias):
 class BaseMigration:
     """ An operation to be performed on the database. """
 
+    # TODO validate this are availabe in settings.DATABASES
+    allowed_database_aliases = None
+
     dependencies = []  # A list of (app_label, migration_name) pairs
 
     # This can be set to make a migration run on a specific backend, rather than the one that's
@@ -40,6 +43,25 @@ class BaseMigration:
     # migration. Custom migration types can be run on custom backends which support them by using
     # this attribute.
     backend_method: str = None
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        all_db_aliases = get_all_db_aliases()
+
+        if (
+            cls.allowed_database_aliases is not None and  ## If not set, then all dbs are allowed
+            any([allowed_db not in all_db_aliases for allowed_db in cls.allowed_database_alias])
+        ):
+            raise DbAliasNotAllowed(
+                    f"Provided Migration <allowed_database_alias> for {self.key} Migration are invalid."
+                    f"Got {cls.allowed_database_alias} while the available dbs are {', '.join(all_db_aliases)}. "
+                )
+
+    @classmethod
+    def get_allowed_database_aliases(cls):
+        if cls.allowed_database_aliases is None:
+            return get_all_db_aliases()
+        return cls.allowed_database_alias
 
     def __init__(self, app_label, name):
         self.app_label = app_label
@@ -71,10 +93,11 @@ class BaseMigration:
         """ Pass the migration to the backend to perform the data operation(s).
             This is what should be called by the web interface to trigger the migration.
         """
-        if not _is_valid_db_alias(database_alias):
+        if database_alias not in self.get_allowed_database_aliases():
             raise CannotRunOnDB(
                 f"Migration {self.key} can't run on {self.database_alias}. "
-                f"The available dbs are {', '.join(get_all_db_aliases)}. ")
+                f"The available dbs are {', '.join(self.get_allowed_database_aliases())}. "
+            )
 
         self.check_dependencies()
         backend = self.get_backend()

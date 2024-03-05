@@ -24,3 +24,9 @@ class CannotRunOnDB(Exception):
     """ Error for when a migration can't be run on a specified connection.
     """
     pass
+
+
+class DbAliasNotAllowed(Exception):
+    """ Error for when a migration can't be run on a specified connection.
+    """
+    pass
