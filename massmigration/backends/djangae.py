@@ -37,7 +37,7 @@ class DjangaeBackend(BackendBase):
     def run_mapper(self, migration, db_alias=None):
         # Use `defer_iteration_with_finalize` to do the processing with whichever key_ranges_getter
         # is appropriate for the DB.
-        queryset = migration.get_queryset()
+        queryset = migration.get_queryset(db_alias)
         key_ranges_getter = self._key_ranges_getter(queryset)
         with get_transaction().atomic(using=db_alias):
             attempt_uuid = migration.mark_as_started(db_alias)
