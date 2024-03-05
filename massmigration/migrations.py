@@ -115,9 +115,8 @@ class BaseMigration:
                 raise MigrationAlreadyStarted(
                     f"Migration {self.__class__.__name__} has already been initiated."
                 )
-            migration = MigrationRecord.objects.create(
+            migration = MigrationRecord.objects.using(db_alias).create(
                 key=self.key,
-                using=db_alias,
             )
             return migration.attempt_uuid
 

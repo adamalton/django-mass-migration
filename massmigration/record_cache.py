@@ -38,7 +38,7 @@ def record_post_save(sender, **kwargs):
         marked as started, marked as errored or marked as finished).
     """
     record = kwargs["instance"]
-    cache_key = get_cache_key(record.key)
+    cache_key = get_cache_key(record.key, record._state.db)
     cache.set(cache_key, record, cache_timeout())
 
 

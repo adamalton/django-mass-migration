@@ -30,7 +30,7 @@ def manage_migrations(request):
         for db_alias in available_db_aliases:
             migration.records_map[db_alias] = {
                 "is_allowed_on_db_alias": db_alias in migration.get_allowed_database_aliases(),
-                "record": migration_records_by_db_alias.get(db_alias, None)
+                "record": migration_records_by_db_alias.get(db_alias, None).get(migration.key, None)
             }
 
     context = {

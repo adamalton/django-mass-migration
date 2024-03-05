@@ -39,7 +39,7 @@ class DjangaeBackend(BackendBase):
         # is appropriate for the DB.
         queryset = migration.get_queryset()
         key_ranges_getter = self._key_ranges_getter(queryset)
-        with get_transaction(using=db_alias).atomic():
+        with get_transaction().atomic(using=db_alias):
             attempt_uuid = migration.mark_as_started(db_alias)
             defer_iteration_with_finalize(
                 queryset,
