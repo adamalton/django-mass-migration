@@ -20,9 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_all_db_aliases():
-    # We append None here to allow the migration to run without specifying a using and therefore
-    # allowing django/django router to do its course.
-    return list(settings.DATABASES.keys()) + [None]
+    return list(settings.DATABASES.keys())
 
 
 def _is_valid_db_alias(db_alias):

@@ -8,8 +8,8 @@
 		<tr>
 			<th>App</th>
 			<th>Migration</th>
-			{% for db in available_db_aliases %}
-				<th>{{db|default:"autoselect_db"}}</th>
+			{% for db_alias in available_db_aliases %}
+				<th>{{db_alias}}</th>
 			{% endfor %}
 		</tr>
 	</thead>
