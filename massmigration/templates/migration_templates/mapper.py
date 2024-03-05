@@ -12,7 +12,7 @@ class Migration(MapperMigration):
         ("{{dependency.0}}", "{{dependency.1}}"),{% endfor %}
     ]
 
-    def get_queryset(self):
+    def get_queryset(self, db_alias):
 
         # PUT YOUR CODE HERE.
         # It must return a queryset for the objects which you wish to perform the operation on.

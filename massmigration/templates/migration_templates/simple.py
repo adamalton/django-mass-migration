@@ -16,7 +16,7 @@ class Migration(SimpleMigration):
         ("{{dependency.0}}", "{{dependency.1}}"),{% endfor %}
     ]
 
-    def operation(self):
+    def operation(self, db_alias):
 
         # PUT YOUR CODE HERE.
         # It should perform the entire migration operation in this single step.
