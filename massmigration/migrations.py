@@ -89,20 +89,20 @@ class BaseMigration:
         backend_class = import_string(self.backend_str)
         return backend_class()
 
-    def launch(self, database_alias=None):
+    def launch(self, db_alias=None):
         """ Pass the migration to the backend to perform the data operation(s).
             This is what should be called by the web interface to trigger the migration.
         """
-        if database_alias not in self.get_allowed_database_aliases():
+        if db_alias not in self.get_allowed_database_aliases():
             raise CannotRunOnDB(
                 f"Migration {self.key} can't run on {self.database_alias}. "
                 f"The available dbs are {', '.join(self.get_allowed_database_aliases())}. "
             )
 
-        self.check_dependencies()
+        self.check_dependencies(db_alias)
         backend = self.get_backend()
         method = getattr(backend, self.backend_method)
-        method(self, database_alias)
+        method(self, db_alias)
         logger.info("Launched migration %s on backend %s", self.key, backend.__class__)
 
     def can_be_started(self, db_alias) -> bool:

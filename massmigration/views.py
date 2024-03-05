@@ -52,7 +52,7 @@ def run_migration(request, key):
         messages.error(request, f"Migration '{key}' has already been started.")
         return redirect("massmigration_manage")
     try:
-        migration.check_dependencies()
+        migration.check_dependencies(db_alias)
     except DependentMigrationNotApplied as error:
         messages.error(request, str(error))
         return redirect("massmigration_manage")
