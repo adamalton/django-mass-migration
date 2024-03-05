@@ -20,14 +20,14 @@ def manage_migrations(request):
     # Load the migration records in one query to avoid a separate query for each one
 
     migration_records_by_db_alias = OrderedDict([
-        (db_alias, MigrationRecord.objects.in_bulk().using(db_alias))
+        (db_alias, MigrationRecord.objects.using(db_alias).in_bulk())
         for db_alias in available_db_aliases
     ])
 
     for migration in migrations:
         migration.records_map = OrderedDict([
             (db_alias, migration_records_by_db_alias.get(db_alias, None))
-            for db_alias in migration.get_allowed_database_aliases()
+            for db_alias in available_db_aliases
         ])
 
     context = {

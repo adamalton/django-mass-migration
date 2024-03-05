@@ -50,18 +50,18 @@ class BaseMigration:
 
         if (
             cls.allowed_database_aliases is not None and  ## If not set, then all dbs are allowed
-            any([allowed_db not in all_db_aliases for allowed_db in cls.allowed_database_alias])
+            any([allowed_db not in all_db_aliases for allowed_db in cls.allowed_database_aliases])
         ):
             raise DbAliasNotAllowed(
                     f"Provided Migration <allowed_database_alias> for {self.key} Migration are invalid."
-                    f"Got {cls.allowed_database_alias} while the available dbs are {', '.join(all_db_aliases)}. "
+                    f"Got {cls.allowed_database_aliases} while the available dbs are {', '.join(all_db_aliases)}. "
                 )
 
     @classmethod
     def get_allowed_database_aliases(cls):
         if cls.allowed_database_aliases is None:
             return get_all_db_aliases()
-        return cls.allowed_database_alias
+        return cls.allowed_database_aliases
 
     def __init__(self, app_label, name):
         self.app_label = app_label
