@@ -8,6 +8,12 @@ class Migration(SimpleMigration):
     # that's specified in the Django settings
     backend: str = None
 
+    # This can be set to specify the list of database aliases on which the migration can be applied.
+    # The migration is not forced on a specific DB but rather the `db_alias` for the DB is passed to `operation`
+    # allowing to customise what is retrieved by the migration.
+    # If None the migration can be applied to all databases.
+    allowed_db_aliases: list = None
+
     dependencies = [
         ('app_name', '001_move_something'),
     ]
