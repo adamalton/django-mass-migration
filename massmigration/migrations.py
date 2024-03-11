@@ -97,7 +97,7 @@ class BaseMigration:
         allowed_db_aliases = self.get_allowed_db_aliases()
         if db_alias not in allowed_db_aliases:
             raise CannotRunOnDB(
-                f"Migration {self.key} can't run on {self.database_alias}. "
+                f"Migration {self.key} can't run on {db_alias}. "
                 f"The allowed DBs for this migration are {', '.join(allowed_db_aliases)}. "
             )
 
