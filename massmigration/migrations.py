@@ -90,7 +90,7 @@ class BaseMigration:
         backend_class = import_string(self.backend_str)
         return backend_class()
 
-    def launch(self, db_alias=None):
+    def launch(self, db_alias):
         """ Pass the migration to the backend to perform the data operation(s).
             This is what should be called by the web interface to trigger the migration.
         """
