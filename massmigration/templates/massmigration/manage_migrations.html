@@ -6,8 +6,11 @@
 <table class="table">
 	<thead>
 		<tr>
-			<th>App</th>
-			<th>Migration</th>
+			<th rowspan="2">App</th>
+			<th rowspan="2">Migration</th>
+			<th colspan="{{available_db_aliases|length}}">Database</th>
+		</tr>
+		<tr>
 			{% for db_alias in available_db_aliases %}
 				<th>{{db_alias}}</th>
 			{% endfor %}
