@@ -26,6 +26,7 @@ class CannotRunOnDB(Exception):
     pass
 
 
+# TODO: replace ConnectionDoesNotExists
 class DbAliasNotAllowed(Exception):
     """ Error for when an invalid db_alias is provided.
     """
