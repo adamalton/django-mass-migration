@@ -30,8 +30,8 @@ class DjangaeBackend(BackendBase):
         Works with SQL, Cloud Datastore and Firestore.
     """
 
-    def run_simple(self, migration):
-        defer(migration.wrapped_operation, _queue=self._get_queue_name(migration))
+    def run_simple(self, migration, db_alias=None):
+        defer(migration.wrapped_operation, db_alias, _queue=self._get_queue_name(migration))
         logger.info("Deferred task to run single-task migration %s", migration.key)
 
     def run_mapper(self, migration, db_alias=None):
