@@ -120,9 +120,20 @@ def my_function():
 	...
 ```
 
+
 This will raise `massmigration.exceptions.RequiredMigrationNotApplied` if the function is called before the migration is applied.
 
-Notes:
+### Multiple DBs Support
+When running on multiple databases, by default, the utilities assume that the migration is ran on all the databases specified by the Migration `allowed_db_aliases` attribute.
+To customise that behaviour the decorators accept an optional `db_aliases` list to specify a subset of the aliases allowed for the migration and require only those to have been applied.
+
+```python
+@requires_migration(("myapp", "0001_my_migration"), db_aliases=["my_db_alias"])
+def my_function():
+	...
+```
+
+### Notes:
 * If the migration _is_ applied, then this will cache that fact, so it will only query the database the first time the function is called.
 * The migration identifier can either be a tuple of `(app_label, migration_name)` or can be a string of `"app_label:migration_name"`.
 * There is an optional second argument `skip_in_tests`, which defaults to `True`.
