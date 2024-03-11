@@ -1,3 +1,6 @@
+from django.db import ConnectionDoesNotExist
+
+
 class MigrationError(Exception):
     """ Base exception class for migration related errors. """
 
@@ -26,8 +29,7 @@ class CannotRunOnDB(Exception):
     pass
 
 
-# TODO: replace ConnectionDoesNotExists
-class DbAliasNotAllowed(Exception):
+class DbAliasNotAllowed(ConnectionDoesNotExist):
     """ Error for when an invalid db_alias is provided.
     """
     pass
