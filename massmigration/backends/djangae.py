@@ -31,7 +31,7 @@ class DjangaeBackend(BackendBase):
     """
 
     def run_simple(self, migration, db_alias=None):
-        defer(migration.wrapped_operation, db_alias, _queue=self._get_queue_name(migration))
+        defer(migration.wrapped_operation, db_alias, _queue=self._get_queue_name(migration), _using=db_alias)
         logger.info("Deferred task to run single-task migration %s", migration.key)
 
     def run_mapper(self, migration, db_alias=None):
