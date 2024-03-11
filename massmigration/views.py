@@ -66,6 +66,7 @@ def run_migration(request, key, db_alias):
     # else...
     context = {
         "migration": migration,
+        "db_alias": db_alias,
     }
     return render(request, "massmigration/run_migration.html", context)
 
