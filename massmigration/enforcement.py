@@ -12,7 +12,7 @@ from django.http import HttpResponse
 
 # Djangae Migrations
 from .exceptions import DbAliasNotAllowed, RequiredMigrationNotApplied
-from .loader import is_valid_migration_id, store
+from .loader import store
 from .models import MigrationRecord
 from .utils.test import in_tests
 
@@ -22,12 +22,24 @@ APPLIED_MIGRATIONS_CACHE = {}
 
 
 def get_migration_key(migration_id_str_or_tuple):
+    """
+    Get the migration key from the provided migration ID string or tuple.
+
+    Args:
+        migration_id_str_or_tuple (str or tuple): The migration ID string or tuple.
+
+    Returns:
+        str: The migration key.
+
+    Raises:
+        ValueError: If the provided migration key doesn't exists.
+    """
     if isinstance(migration_id_str_or_tuple, (list, tuple)):
         key = MigrationRecord.key_from_name_tuple(migration_id_str_or_tuple)
     else:
         key = migration_id_str_or_tuple
 
-    if store.by_key.get(key, None) is None:
+    if key not in store.by_key:
         raise ValueError(
             f"Provided migration with key '{key}' not found."
             f"Available keys are {', '.join(store.by_key.keys())}"
@@ -64,8 +76,6 @@ def requires_migration(migration_identifier, db_aliases=[], is_view=False, skip_
                 key = get_migration_key(migration_identifier)
 
                 migration = store.by_key.get(key, None)
-                if not migration:
-                    raise ValueError(f"Migration with key '{key}' not found.")
 
                 allowed_db_aliases = migration.get_allowed_db_aliases()
 
@@ -78,7 +88,7 @@ def requires_migration(migration_identifier, db_aliases=[], is_view=False, skip_
                         raise DbAliasNotAllowed(
                             f"requires_migration decorator improperly configured. "
                             f"It requires the migration <{migration_identifier}> to have run on <{', '.join(db_aliases)}> "
-                            f"while the allowes databases are <{', '.join(allowed_db_aliases)}>."
+                            f"while the allowed databases are <{', '.join(allowed_db_aliases)}>."
                         )
                     else:
                         required_migrations_db_aliases = db_aliases
