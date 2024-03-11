@@ -73,7 +73,7 @@ does and how your the backend handles it are up to you.
 
 Running with Multiple DBs
 -------------------
-If your projects connects to multiple databases it is possible to run your migrations against all of them singularly.
+If your project connects to multiple databases it is possible to run your migrations against each database individually.
 The migrations are not forced on a specific DB but rather the `db_alias` is passed to both to `get_queryset(db_alias)` (for mappers migrations) and `operation` (for simple migrations) giving control back to the developer to customise what is retrieved for the migration.
 
 By default a migration can be run on any available database. That can be customised but setting `allowed_db_aliases` on the migration class.

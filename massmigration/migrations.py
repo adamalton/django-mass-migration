@@ -54,7 +54,7 @@ class BaseMigration:
             any([allowed_db not in all_db_aliases for allowed_db in cls.allowed_db_aliases])
         ):
             raise DbAliasNotAllowed(
-                    f"Provided Migration <allowed_database_alias> for {self.key} Migration are invalid."
+                    f"Migration {self.key} provided invalid value(s) in `allowed_database_aliases`. "
                     f"Got <{cls.allowed_db_aliases}> while the available dbs are {', '.join(all_db_aliases)}. "
                 )
 
@@ -98,7 +98,7 @@ class BaseMigration:
         if db_alias not in allowed_db_aliases:
             raise CannotRunOnDB(
                 f"Migration {self.key} can't run on {self.database_alias}. "
-                f"The available dbs are {', '.join(allowed_db_aliases)}. "
+                f"The allowed DBs for this migration are {', '.join(allowed_db_aliases)}. "
             )
 
         self.check_dependencies(db_alias)
