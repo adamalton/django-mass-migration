@@ -50,7 +50,7 @@ def run_migration(request, key, db_alias):
     record = migration.get_migration_record(db_alias)
 
     if record:
-        messages.error(request, f"Migration '{key}' has already been started.")
+        messages.error(request, f"Migration '{key}' for db <{db_alias}> has already been started.")
         return redirect("massmigration_manage")
     try:
         migration.check_dependencies(db_alias)
@@ -76,7 +76,7 @@ def migration_detail(request, key, db_alias):
     # TODO: Show the migrations and their records for any db_alias rather than just the one.
     migration = store.by_key.get(key)
     if not migration:
-        raise Http404(f"Migration with key {key} for db {db_alias} not found.")
+        raise Http404(f"Migration with key {key} not found.")
 
     record = MigrationRecord.objects.using(db_alias).filter(key=key).first()
     dependencies = []
@@ -102,14 +102,14 @@ def delete_migration(request, key, db_alias):
     """ Delete a migration which has already started or has errored. """
     migration = store.by_key.get(key)
     if not migration:
-        raise Http404(f"Migration with key {key} for db {db_alias} not found.")
+        raise Http404(f"Migration with key {key} not found.")
 
     record = migration.get_migration_record(db_alias)
 
     if not record:
         messages.error(
             request,
-            f"Can't delete migration '{key}' because no record for it exists. "
+            f"Can't delete migration '{key}' for db <{db_alias}> because no record for it exists. "
             "Maybe you deleted it already?"
         )
         return redirect("massmigration_manage")
