@@ -75,7 +75,7 @@ def requires_migration(migration_identifier, db_aliases=[], is_view=False, skip_
             def enforce_migration():
                 key = get_migration_key(migration_identifier)
 
-                migration = store.by_key.get(key, None)
+                migration = store.by_key[key]
 
                 allowed_db_aliases = migration.get_allowed_db_aliases()
 
