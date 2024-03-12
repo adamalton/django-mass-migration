@@ -46,5 +46,5 @@ def can_start_migration(migration: BaseMigration, db_alias: str) -> bool:
 
 def initiate_migration(migration: BaseMigration, db_alias: str) -> bool:
     if migration_is_in_progress(migration):
-        raise MigrationAlreadyStarted(f"Migration {migration.key} on db <{{db_alias}}> is already running.")
+        raise MigrationAlreadyStarted(f"Migration {migration.key} on db '{db_alias}' is already running.")
     migration.launch(db_alias)
