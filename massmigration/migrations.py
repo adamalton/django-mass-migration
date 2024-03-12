@@ -112,7 +112,7 @@ class BaseMigration:
 
     def mark_as_started(self, db_alias) -> UUID:
         """ Mark the migration as started in the database. Return the attempt UUID. """
-        with get_transaction().atomic(using=db_alias):
+        with get_transaction(db_alias).atomic(using=db_alias):
             if not self.can_be_started(db_alias):
                 raise MigrationAlreadyStarted(
                     f"Migration {self.__class__.__name__} has already been initiated."
@@ -132,7 +132,7 @@ class BaseMigration:
     @retry_on_error()
     def mark_as_finished(self, db_alias):
         """ Mark the migration as applied/finalized in the database. """
-        with get_transaction().atomic(using=db_alias):
+        with get_transaction(db_alias).atomic(using=db_alias):
             migration = MigrationRecord.objects.using(db_alias).get(key=self.key)
             if migration.is_applied:
                 logger.warning("Migration %s is already marked as applied.", self.key)
