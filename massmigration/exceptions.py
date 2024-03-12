@@ -1,4 +1,4 @@
-from django.db import ConnectionDoesNotExist
+from django.db.utils import ConnectionDoesNotExist
 
 
 class MigrationError(Exception):
