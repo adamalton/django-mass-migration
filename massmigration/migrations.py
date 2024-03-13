@@ -174,7 +174,7 @@ class SimpleMigration(BaseMigration):
         logger.info("Running operation for migration %s", self.key)
         self.mark_as_started(db_alias)
         try:
-            self.operation()
+            self.operation(db_alias)
         except Exception as error:
             self.mark_as_errored(db_alias, error)
         else:
