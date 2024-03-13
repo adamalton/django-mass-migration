@@ -14,10 +14,6 @@ class Migration(SimpleMigration):
     # If None the migration can be applied to all databases.
     allowed_db_aliases: list = None
 
-    dependencies = [
-        ('app_name', '001_move_something'),
-    ]
-
     dependencies = [{% for dependency in dependencies %}
         ("{{dependency.0}}", "{{dependency.1}}"),{% endfor %}
     ]
