@@ -74,7 +74,9 @@ def run_migration(request, key, db_alias):
 @superuser_required()
 def migration_detail(request, key, db_alias):
     """ View the details of a single migration. """
-    # TODO: Show the migrations and their records for any db_alias rather than just the one.
+    # TODO(https://github.com/adamalton/django-mass-migration/issues/4):
+    # The migration detail view should collate the state of the Migration
+    # across all allowed_db_aliases.
     migration = store.by_key.get(key)
     if not migration:
         raise Http404(f"Migration with key {key} not found.")
