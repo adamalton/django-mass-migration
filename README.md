@@ -71,6 +71,13 @@ If you want to take matters into your own hands you can write an entirely custom
 These can still be tracked the same as the other operations, but the implementation of what your migration
 does and how your the backend handles it are up to you.
 
+Running with Multiple DBs
+-------------------
+If your project connects to multiple databases it is possible to run your migrations against each database individually.
+The migrations are not forced on a specific DB but rather the `db_alias` is passed to both to `get_queryset(db_alias)` (for mappers migrations) and `operation` (for simple migrations) giving control back to the developer to customise what is retrieved for the migration.
+
+By default a migration can be run on any available database. That can be customised but setting `allowed_db_aliases` on the migration class.
+
 
 Applying Migrations
 -------------------
@@ -113,9 +120,20 @@ def my_function():
 	...
 ```
 
+
 This will raise `massmigration.exceptions.RequiredMigrationNotApplied` if the function is called before the migration is applied.
 
-Notes:
+### Multiple DBs Support
+When running on multiple databases, by default, the utilities assume that the migration must have been applied on all the databases specified by the Migration's `allowed_db_aliases` attribute.
+To customise that behaviour the decorators accept an optional `db_aliases` list to specify a subset of the aliases allowed for the migration and require only those to have been applied.
+
+```python
+@requires_migration(("myapp", "0001_my_migration"), db_aliases=["my_db_alias"])
+def my_function():
+	...
+```
+
+### Notes:
 * If the migration _is_ applied, then this will cache that fact, so it will only query the database the first time the function is called.
 * The migration identifier can either be a tuple of `(app_label, migration_name)` or can be a string of `"app_label:migration_name"`.
 * There is an optional second argument `skip_in_tests`, which defaults to `True`.

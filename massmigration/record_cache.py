@@ -12,12 +12,12 @@ from massmigration.models import MigrationRecord
 DEFAULT_CACHE_TIMEOUT = 60
 
 
-def get_record(key):
+def get_record(key, db_alias):
     """ Get the MigrationRecord for the given key. This is designed to be called heavily, i.e. for
         every object in a MapperMigration, so the result is cached with a best-effort attempt to
         refresh that cache when the record changes, but with no guarantee of it.
     """
-    cache_key = get_cache_key(key)
+    cache_key = get_cache_key(key, db_alias)
     record = cache.get(cache_key)
     if not record:
         record = MigrationRecord.objects.filter(key=key).first()
@@ -25,8 +25,8 @@ def get_record(key):
     return record
 
 
-def get_cache_key(migration_key):
-    return f"massmigration_record:{migration_key}"
+def get_cache_key(migration_key, db_alias):
+    return f"massmigration_record:{migration_key}:{db_alias}"
 
 
 def cache_timeout():
@@ -38,7 +38,7 @@ def record_post_save(sender, **kwargs):
         marked as started, marked as errored or marked as finished).
     """
     record = kwargs["instance"]
-    cache_key = get_cache_key(record.key)
+    cache_key = get_cache_key(record.key, record._state.db)
     cache.set(cache_key, record, cache_timeout())
 
 

@@ -52,6 +52,7 @@ store = MigrationsStore()
 def is_valid_migration_name(name):
     return bool(re.match(r"^[a-z0-9_]+$", name))
 
+
 def is_valid_migration_id(name):
     return bool(re.match(r"^\d{1,5}_[a-z0-9_]+$", name))
 

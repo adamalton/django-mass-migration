@@ -13,7 +13,9 @@ from .utils.functional import MemoizedLazyList
 
 
 class MigrationRecord(models.Model):
-    """ Stores a record of a particular migration being applied to the database. """
+    """ Stores a record of a particular migration being applied to the database.
+    The assumption is these models are stored on the same DB the migration has been applied to.
+    """
 
     class Status(models.TextField):
         APPLIED = "APPLIED"

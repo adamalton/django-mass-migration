@@ -6,25 +6,45 @@
 <table class="table">
 	<thead>
 		<tr>
-			<th>App</th>
-			<th>Migration</th>
-			<th>Status</th>
-			<th>Actions</th>
+			<th rowspan="2">App</th>
+			<th rowspan="2">Migration</th>
+			<th colspan="{{available_db_aliases|length}}">Database</th>
+		</tr>
+		<tr>
+			{% for db_alias in available_db_aliases %}
+				<th>{{db_alias}}</th>
+			{% endfor %}
 		</tr>
 	</thead>
 	<tbody>
-	{% for migration in migrations %}
-		<tr>
-			<td>{{migration.app_label}}</td>
-			<td><a href="{% url 'massmigration_detail' key=migration.key %}">{{migration.name}}</a></td>
-			<td>{% if migration.record %}{{migration.record.status}}{% else %}NOT RUN{% endif %}</td>
-			<td>
-				{% if not migration.record %}<a href="{% url 'massmigration_run' key=migration.key %}">Run...</a>
-				{% else %}<a href="{% url 'massmigration_delete' key=migration.key %}">Delete...</a>
-				{% endif %}
-			</td>
-		</tr>
-	{% endfor %}
+		{% for migration in migrations %}
+			<tr>
+				<td>{{migration.app_label}}</td>
+				<td>{{migration.name}}</td>
+				{% for db_alias, migration_for_alias in migration.records_map.items %}
+					{% if migration_for_alias.is_allowed_on_db_alias %}
+					 	{% with migration_record=migration_for_alias.record %}
+						<td>
+							<div>
+								<a href="{% url 'massmigration_detail' key=migration.key db_alias=db_alias%}">Detail</a>
+							</div>
+							<div>{% if migration_record %}{{migration_record.status}}{% else %}NOT RUN{% endif %}</div>
+							<div>
+								{% if not migration_record %}
+									<a href="{% url 'massmigration_run' key=migration.key db_alias=db_alias %}">Run...</a>
+								{% else %}
+									<a href="{% url 'massmigration_delete' key=migration.key db_alias=db_alias %}">Delete...</a>
+								{% endif %}
+							</div>
+						</td>
+						{% endwith %}
+					{% else %}
+						<td>Not allowed on DB</td>
+					{% endif %}
+
+				{% endfor %}
+			</tr>
+		{% endfor %}
 	</tbody>
 </table>
 

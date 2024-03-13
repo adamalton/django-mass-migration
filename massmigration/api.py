@@ -18,33 +18,33 @@ def get_all_migrations() -> List[BaseMigration]:
     return store.all
 
 
-def migration_is_applied(migration: BaseMigration) -> bool:
+def migration_is_applied(migration: BaseMigration, db_alias: str) -> bool:
     """ Is the given migration applied? """
-    return enforcement.migration_is_applied(migration.key)
+    return enforcement.migration_is_applied(migration.key, db_alias)
 
 
-def migration_was_started(migration: BaseMigration) -> bool:
+def migration_was_started(migration: BaseMigration, db_alias: str) -> bool:
     """ Has the given migration ever been initiated (even if it hasn't finished or it failed)? """
-    return MigrationRecord.objects.filter(key=migration.key).exists()
+    return MigrationRecord.objects.using(db_alias).filter(key=migration.key).exists()
 
 
-def migration_is_in_progress(migration: BaseMigration) -> bool:
+def migration_is_in_progress(migration: BaseMigration, db_alias: str) -> bool:
     """ Is the given migration currently running (started but not yet finished and not errored)? """
-    return MigrationRecord.objects.filter(
+    return MigrationRecord.objects.using(db_alias).filter(
         key=migration.key, is_applied=False, has_error=False
     ).exists()
 
 
-def can_start_migration(migration: BaseMigration) -> bool:
+def can_start_migration(migration: BaseMigration, db_alias: str) -> bool:
     """ Can the given migration be started? I.e. either it's never been started or all previous
         attempts have errored.
     """
-    return not MigrationRecord.objects.filter(key=migration.key).exclude(
+    return not MigrationRecord.objects.using(db_alias).filter(key=migration.key).exclude(
         has_error=True
     ).exists()
 
 
-def initiate_migration(migration: BaseMigration) -> bool:
+def initiate_migration(migration: BaseMigration, db_alias: str) -> bool:
     if migration_is_in_progress(migration):
-        raise MigrationAlreadyStarted(f"Migration {migration.key} is already running.")
-    migration.launch()
+        raise MigrationAlreadyStarted(f"Migration {migration.key} on db '{db_alias}' is already running.")
+    migration.launch(db_alias)
