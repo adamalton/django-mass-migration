@@ -95,7 +95,6 @@ def migration_detail(request, key, db_alias):
         "record": record,
         "dependencies": dependencies,
         "db_alias": db_alias,
-
     }
     return render(request, "massmigration/migration_detail.html", context)
 

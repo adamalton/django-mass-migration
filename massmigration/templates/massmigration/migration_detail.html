@@ -20,7 +20,7 @@
 		<td>
 			{% for dependency in dependencies %}
 				<div>
-					<a href="{% url 'massmigration_detail' key=dependency.key db_alias=db_alias%}">{{dependency.key}}</a>
+					<a href="{% url 'massmigration_detail' key=dependency.key db_alias=db_alias %}">{{dependency.key}}</a>
 					({% if dependency.record %}{{dependency.record.status}}{% else %}NOT RUN{% endif %})
 				</div>
 			{% empty %}
