@@ -190,7 +190,7 @@ class MapperMigration(BaseMigration):
         """ Returns the Django queryset which is to be mapped over. """
         raise NotImplementedError("The `get_queryset` method must be implemented by subclasses.")
 
-    def operation(self, obj: models.Model) -> None:
+    def operation(self, obj: models.Model, db_alias: str) -> None:
         """ This is what will get called on each model instance in the queryset. """
         raise NotImplementedError("The `operation` method must be implemented by subclasses.")
 
@@ -224,7 +224,7 @@ class MapperMigration(BaseMigration):
                 obj.pk,
             )
             try:
-                self.operation(obj)
+                self.operation(obj, db_alias)
             except Exception as error:
                 logger.exception(
                     "Error in migration %s trying to process object %s (pk=%r).",
