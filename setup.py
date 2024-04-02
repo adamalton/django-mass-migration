@@ -8,13 +8,16 @@ LONG_DESCRIPTION = open(os.path.join(os.path.dirname(__file__), "README.md")).re
 URL = "https://github.com/adamalton/django-mass-migration"
 AUTHOR = "Adam Alton"
 
-# TODO: possibly make the dependency on djangae optional
-EXTRAS = {}
 
+# This gets replaced by the publish.yml workflow
+VERSION = "{{VERSION_PLACEHOLDER}}"
+# If it's not replaced (e.g. when installing for tests) then we still need a valid version number
+if "PLACEHOLDER" in VERSION:
+    VERSION = "99.9.9"
 
 setup(
     name=NAME,
-    version="{{VERSION_PLACEHOLDER}}",
+    version=f"{VERSION}",
     packages=PACKAGES,
     author=AUTHOR,
     description=DESCRIPTION,
@@ -36,9 +39,11 @@ setup(
     include_package_data=True,
     install_requires=[
         "django>=3.2,<5.0",
-        "djangae>=1.1.0",
-        "django-gcloud-connectors>=0.3.6",
     ],
-    extras_require=EXTRAS,
-    # tests_require=EXTRAS["test"],
+    extras_require={
+        "djangae": [
+            "djangae>=1.1.0",
+            "django-gcloud-connectors>=0.3.6",
+        ],
+    },
 )
