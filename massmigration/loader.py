@@ -67,11 +67,11 @@ def is_valid_migration_id(name):
     return bool(re.match(r"^\d{1,5}_[a-z0-9_]+$", name))
 
 
-def load_migration(app_config, filename):
-    """ Return in instance of the migration class from the given filename from the given app_config.
+def load_migration(app_config, migration_id):
+    """ Return in instance of the migration class from the given migration_id from the given
+        app_config.
     """
     module_str = app_config.name
-    migration_id = migration_id_from_filename(filename)
     class_path_str = f"{module_str}.{MIGRATIONS_FOLDER}.{migration_id}.Migration"
     cls = import_string(class_path_str)
     app_label = app_config.label
