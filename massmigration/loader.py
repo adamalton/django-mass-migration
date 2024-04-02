@@ -39,8 +39,9 @@ class MigrationsStore:
             if os.path.isdir(migrations_path):
                 items = os.listdir(migrations_path)
                 for item in sorted(items):
-                    if is_valid_migration_id(item.rstrip(".py")):
-                        migration = load_migration(app_config, item)
+                    migration_id = migration_id_from_filename(item)
+                    if migration_id:
+                        migration = load_migration(app_config, migration_id)
                         self._all.append(migration)
                         self._by_key[migration.key] = migration
         self._loaded = True
@@ -49,7 +50,16 @@ class MigrationsStore:
 store = MigrationsStore()
 
 
+def migration_id_from_filename(filename):
+    if filename.endswith(".py"):
+        migration_id = re.sub(r"\.py$", "", filename)
+        if is_valid_migration_id(migration_id):
+            return migration_id
+    return None
+
+
 def is_valid_migration_name(name):
+    """ Is the given name (supplied without leading number) a valid name for a migration? """
     return bool(re.match(r"^[a-z0-9_]+$", name))
 
 
@@ -61,9 +71,9 @@ def load_migration(app_config, filename):
     """ Return in instance of the migration class from the given filename from the given app_config.
     """
     module_str = app_config.name
-    migration_name = filename.rstrip(".py")
-    class_path_str = f"{module_str}.{MIGRATIONS_FOLDER}.{migration_name}.Migration"
+    migration_id = migration_id_from_filename(filename)
+    class_path_str = f"{module_str}.{MIGRATIONS_FOLDER}.{migration_id}.Migration"
     cls = import_string(class_path_str)
     app_label = app_config.label
-    instance = cls(app_label, migration_name)
+    instance = cls(app_label, migration_id)
     return instance
