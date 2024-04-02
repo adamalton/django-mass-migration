@@ -1,0 +1,13 @@
+name: Test
+on: [push]
+env:
+  DJANGO_SETTINGS_MODULE: "testing.test_settings"
+jobs:
+  Test:
+    runs-on: python:3.12
+    steps:
+    - name: Run tests
+      run: >-
+        pip install -e .
+        cp testing/test_settings.py ./
+        django-admin test massmigration
