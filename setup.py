@@ -39,11 +39,13 @@ setup(
     include_package_data=True,
     install_requires=[
         "django>=3.2,<5.0",
+        "djangae>=1.1.0",
+        "django-gcloud-connectors>=0.3.6",
     ],
-    extras_require={
-        "djangae": [
-            "djangae>=1.1.0",
-            "django-gcloud-connectors>=0.3.6",
-        ],
-    },
+    # TODO: make Djangae dependencies optional
+    # extras_require={
+    #     "djangae": [
+
+    #     ],
+    # },
 )
