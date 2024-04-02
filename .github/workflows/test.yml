@@ -1,0 +1,20 @@
+name: Test
+on: [push]
+env:
+  DJANGO_SETTINGS_MODULE: "testing.test_settings"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        # This is the version of the action for setting up Python, not the Python version.
+        uses: actions/setup-python@v5
+        with:
+          # Semantic version range syntax or exact version of a Python version
+          python-version: '3.11'
+      - name: Install
+        run: pip install -e .
+      - name: Run tests
+        run: >-
+          django-admin test massmigration
