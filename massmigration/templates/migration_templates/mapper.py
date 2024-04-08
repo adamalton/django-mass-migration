@@ -26,7 +26,7 @@ class Migration(MapperMigration):
 
         raise NotImplementedError
 
-    def operation(self, obj):
+    def operation(self, obj, db_alias):
 
         # PUT YOUR CODE HERE.
         # It should perform the operation on the given object which will be an instance from the
