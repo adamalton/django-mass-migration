@@ -12,9 +12,8 @@ from massmigration.models import MigrationRecord
 # That said, should you be allowed to run the same migration on two different databases?
 
 
-def get_transaction():
-    connection = router.db_for_write(MigrationRecord)
-    engine = settings.DATABASES[connection]["ENGINE"]
+def get_transaction(db_alias):
+    engine = settings.DATABASES[db_alias]["ENGINE"]
     transaction = django_transaction
     if engine.startswith("gcloudc.db.backends"):
         try:
