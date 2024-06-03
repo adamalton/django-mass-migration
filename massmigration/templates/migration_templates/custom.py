@@ -5,11 +5,15 @@ class Migration(BaseMigration):
     """ YOUR DESCRIPTION HERE. This will appear in the Django admin. """
 
     # This can be set to make a migration run on a specific backend, rather than the one that's
-    # that's specified in the Django settings
     backend: str = None
+    # specified in the Django settings
 
     # For a custom migration, you must set this, and your backend must have this method.
     backend_method: str = NotImplemented
+
+    # If you need to configure the backend differently for each migration, this is a place for
+    # passing parameters to it.
+    backend_params: dict = {}
 
     # This can be set to specify the list of database aliases on which the migration can be applied.
     # The migration is not forced on a specific DB but rather the `db_alias` for the DB is passed to `launch`
