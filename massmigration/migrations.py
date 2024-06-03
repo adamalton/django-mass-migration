@@ -40,6 +40,10 @@ class BaseMigration:
     # specified in the Django settings
     backend: str = None
 
+    # If you need to configure the backend differently for each migration, this is a place for
+    # passing parameters to it.
+    backend_params: dict = {}
+
     # This specifies the name of the method on the backend class which should be called to run this
     # migration. Custom migration types can be run on custom backends which support them by using
     # this attribute.
@@ -89,6 +93,10 @@ class BaseMigration:
     def get_backend(self):
         backend_class = import_string(self.backend_str)
         return backend_class()
+
+    def get_backend_params(self):
+        # Handle `backend_params` being a dict, None or missing entirely
+        return getattr(self, "backend_params", {}) or {}
 
     def launch(self, db_alias):
         """ Pass the migration to the backend to perform the data operation(s).

@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 class DjangaeBackend(BackendBase):
     """ Backend for running operations on Google Cloud Tasks in Djangae projects.
         Works with SQL, Cloud Datastore and Firestore.
+
+        Optional `backend_params`:
+         - `key_ranges_getter` - gets passed through to `defer_iteration_with_finalize`.
     """
 
     def run_simple(self, migration, db_alias):
@@ -38,7 +41,8 @@ class DjangaeBackend(BackendBase):
         # Use `defer_iteration_with_finalize` to do the processing with whichever key_ranges_getter
         # is appropriate for the DB.
         queryset = migration.get_queryset(db_alias)
-        key_ranges_getter = self._key_ranges_getter(queryset)
+        params = migration.get_backend_params()
+        key_ranges_getter = params.get("key_ranges_getter") or self._key_ranges_getter(queryset)
         with get_transaction(db_alias).atomic(using=db_alias):
             attempt_uuid = migration.mark_as_started(db_alias)
             defer_iteration_with_finalize(
