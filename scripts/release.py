@@ -29,8 +29,11 @@ def increment_tag(tag, kind):
     major, minor, bugfix = tag.replace("v", "").split(".")
     if kind == "major":
         major = int(major) + 1
+        minor = 0
+        bugfix = 0
     elif kind == "minor":
         minor = int(minor) + 1
+        bugfix = 0
     elif kind == "bugfix":
         bugfix = int(bugfix) + 1
     return f"v{major}.{minor}.{bugfix}"
