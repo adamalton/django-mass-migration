@@ -240,4 +240,4 @@ class MapperMigration(BaseMigration):
                     obj.__class__.__name__,
                     obj.pk,
                 )
-                self.mark_as_errored(error, db_alias)
+                self.mark_as_errored(db_alias, error)
