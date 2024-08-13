@@ -20,7 +20,7 @@ def get_record(key, db_alias):
     cache_key = get_cache_key(key, db_alias)
     record = cache.get(cache_key)
     if not record:
-        record = MigrationRecord.objects.filter(key=key).first()
+        record = MigrationRecord.objects.using(db_alias).filter(key=key).first()
         cache.set(cache_key, record, cache_timeout())
     return record
 
