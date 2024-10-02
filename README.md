@@ -149,6 +149,47 @@ If the specified migration is not applied then the view will return a 503 respon
 Concepts
 --------
 
+### Why Mass Migration?
+
+#### Reason 1
+
+Django's migration system is built for relational databases. 
+These have a table schema and allow you to make a change to that schema as a single "operation",
+often inside a transaction.
+This means that a change to a schema is either "applied" or "not applied".
+
+On schemaless databases (such as Google's Cloud Datastore/Firestore), there is no schema, and
+therefore making a change to a "table", such as adding or removing a column, requires mapping over
+each row of the table to apply that change.
+This means that a change to a schema can be "applied", "not applied" or "being applied".
+
+Django's migration system doesn't allow for this in-between state.
+Its internal `Migration` model (which is nested inside the `MigrationRecorder` and cannot be edited)
+which tracks migrations cannot store the fact that a migration is currently being applied; a
+migration is either applied or it isn't.
+
+This makes Django's migration recorder unsuitable for tracking changes to a schemaless database.
+
+#### Reason 2
+
+If you're using a schemaless database with Django, e.g. you're using Google Cloud Datastore with a
+connector such as
+[gcloudc](https://gitlab.com/potato-oss/google-cloud/django-gcloud-connectors/-/tree/master/gcloudc)
+then making a change to your model doesn't necessarily require you to create any kind of migration
+at all.
+
+For example, if you add a new field to one of your models and you specify a default value, you can
+just start using that new field with no need for a migration.
+Existing rows which don't yet have that column will simply have the column added the next time
+they're resaved via your model.
+
+But in other cases, the more limited querying capabilities of a schemaless database mean that there
+are times when something which could be done with an `UPDATE table` statement on SQL can't be done
+so easily.
+For these cases, `django-mass-migration` provides tools to let you iterate over your table rows and
+perform data manipulation operations.
+
+
 ### General approach
 
 TODO: long-running migrations, errors, etc.
