@@ -184,3 +184,25 @@ Used by the `DjangaeBackend`, this sets the Google Cloud Tasks queue name to be 
 
 You're unlikely to need this.
 It sets the time for caching MigrationRecords for the purpose of checking a migration's status during mapper operations.
+
+
+Backends
+--------
+
+Currently `massmigration` includes a `DjangaeBackend` for running migrations on Google App Engine
+applications which are using [djangae](https://djangae.readthedocs.io/).
+
+Due to the nature of different hosting platforms having different types of task queue systems, each
+platform will require a slightly different backend, but these can easily be written and plugged in
+(merge requests welcome!).
+
+### DjangaeBackend
+
+This runs simple migrations using `djangae.tasks.deferred` and runs mapper migrations using
+`djangae.tasks.defer_iteration_with_finalize`.
+
+It can be configured via the `backend_params` attribute on your `Migration` classes, using the
+following two items:
+
+* `defer_kwargs`: a dict of kwargs which will get passed to the `defer` call for simple migrations.
+* `defer_iteration_with_finalize_kwargs` - a dict of kwargs which will get passed through to `defer_iteration_with_finalize` for mapper migrations.

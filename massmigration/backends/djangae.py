@@ -1,5 +1,6 @@
 # Standard library
 import logging
+import warnings
 
 # Third party
 from djangae.processing import (
@@ -30,31 +31,51 @@ class DjangaeBackend(BackendBase):
         Works with SQL, Cloud Datastore and Firestore.
 
         Optional `backend_params`:
-         - `key_ranges_getter` - gets passed through to `defer_iteration_with_finalize`.
+        - `defer_kwargs` - these get passed through to `defer` for simple migrations.
+        - `defer_iteration_with_finalize_kwargs` - these get passed through to
+            `defer_iteration_with_finalize` for mapper migrations.
     """
 
     def run_simple(self, migration, db_alias):
-        defer(migration.wrapped_operation, db_alias, _queue=self._get_queue_name(migration), _using=db_alias)
+        defer_kwargs = {
+            "_queue": self._get_queue_name(migration),
+            "_using": db_alias,
+            **migration.get_backend_params().get("defer_kwargs", {}),
+        }
+        defer(migration.wrapped_operation, db_alias, **defer_kwargs)
         logger.info("Deferred task to run single-task migration %s", migration.key)
 
     def run_mapper(self, migration, db_alias):
         # Use `defer_iteration_with_finalize` to do the processing with whichever key_ranges_getter
         # is appropriate for the DB.
         queryset = migration.get_queryset(db_alias)
+        key_ranges_getter = self._key_ranges_getter(queryset)
         params = migration.get_backend_params()
-        key_ranges_getter = params.get("key_ranges_getter") or self._key_ranges_getter(queryset)
+        # Legacy backwards compatibility
+        if "key_ranges_getter" in params:
+            warnings.warn(
+                "Use of backend_params['key_ranges_getter'] is deprecated. "
+                "Use backend_params['defer_iteration_with_finalize_kwargs']['key_ranges_getter'] ",
+                "instead."
+            )
+            key_ranges_getter = params["key_ranges_getter"]
+        # End backwards compatibility
+        defer_iteration_with_finalize_kwargs = {
+            "key_ranges_getter": key_ranges_getter,
+            "migration": migration,
+            "db_alias": db_alias,
+            "_queue": self._get_queue_name(migration),
+            "_transactional": True,
+            **params.get("defer_iteration_with_finalize_kwargs", {}),
+        }
         with get_transaction(db_alias).atomic(using=db_alias):
             attempt_uuid = migration.mark_as_started(db_alias)
             defer_iteration_with_finalize(
                 queryset,
                 self._call_mapper_wrapped_operation,
                 self._mark_mapper_as_finished,
-                key_ranges_getter=key_ranges_getter,
-                migration=migration,
                 attempt_uuid=attempt_uuid,
-                db_alias=db_alias,
-                _queue=self._get_queue_name(migration),
-                _transactional=True,
+                **defer_iteration_with_finalize_kwargs,
             )
             logger.info("Deferred task to run mapper migration %s", migration.key)
 
