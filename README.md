@@ -25,6 +25,11 @@ Installation
 3. Add  `path("migrations/", include("massmigration.urls"))` to your root urlconf.
 4. If you're using the bundled backend, set `settings.MASSMIGRATION_TASK_QUEUE` to a Google Cloud Tasks queue name.
 
+### Supported Python & Django versions
+
+* Python 3.10 to 3.13
+* Django 3.2 to 5.2
+
 
 Creating A Migration
 --------------------
@@ -153,7 +158,7 @@ Concepts
 
 #### Reason 1
 
-Django's migration system is built for relational databases. 
+Django's migration system is built for relational databases.
 These have a table schema and allow you to make a change to that schema as a single "operation",
 often inside a transaction.
 This means that a change to a schema is either "applied" or "not applied".

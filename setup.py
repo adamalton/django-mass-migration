@@ -22,7 +22,7 @@ setup(
     author=AUTHOR,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     keywords=["django", "djangae", "django-gcloud-connectors", "Google App Engine"],
     url=URL,
     classifiers=[
@@ -31,6 +31,9 @@ setup(
         "Framework :: Django :: 3.2",
         "Framework :: Django :: 4.1",
         "Framework :: Django :: 4.2",
+        "Framework :: Django :: 5.0",
+        "Framework :: Django :: 5.1",
+        "Framework :: Django :: 5.2",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
@@ -38,14 +41,13 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
-        "django>=3.2,<5.0",
+        "django>=3.2,<6.0",
         "djangae>=1.1.0",
         "django-gcloud-connectors>=0.3.6",
     ],
     # TODO: make Djangae dependencies optional
     # extras_require={
     #     "djangae": [
-
     #     ],
     # },
 )
