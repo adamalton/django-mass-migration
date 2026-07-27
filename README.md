@@ -197,16 +197,29 @@ perform data manipulation operations.
 
 ### General approach
 
-TODO: long-running migrations, errors, etc.
-Why long-running migrations are not run as part of the deployment process (because they take too long and you don't want to take your site down while they run).
+In a "normal" Django setup, the usually approach is to apply migrations as part of the deployment process.
+This might involve locking one or more database tables in order to apply a migration
+(such as adding a new column for a newly-added Django model field).
+This can mean that the app has to be taken offline for a short period during the deployment.
+
+Django Mass Migration is designed for databases that don't have table locks (such as Google's Cloud Datastore/Firestore),
+or for situations where you run Django migrations as part of your standard deployment process but you have a long-running
+data migration script which you want to run outside of that deployment process to avoid holding it up.
+
+With a schemaless database the deployment process for adding new DB fields is instead:
+
+1. Add new model field to the code.
+    - Application code can be updated to populate the field, but not to _use_ it yet.
+2. Add a mass migration to populate that field as required on existing rows.
+3. Deploy that code (with no downtime), and then run the mass migration.
+4. Make code changes to start using the new field, now that all rows will have it.
+5. Deploy those code changes in a separate deployment (still with no downtime).
 
 ### Model State
 
-TODO: Stuff about why there's no model history (apps/schema_editor).
-
-### Workflow & Code Protection
-
-TODO: Deployment workflow and use of enforcement utilities
+Unlike Django's built-in migration system, mass migration is not a schema history tracker.
+For schemaless databases this concept simply doesn't apply. For SQL databases you may still use Django Mass Migrations
+to run data migration tasks.
 
 
 Settings
